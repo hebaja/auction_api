@@ -13,6 +13,7 @@
 	<artifactId>auction</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>auction</name>
+	<packaging>war</packaging>
 	<description>Auction attempt</description>
 	<properties>
 		<java.version>11</java.version>
