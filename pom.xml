@@ -34,8 +34,19 @@
 		</profile>
 		<profile>
 			<id>prod</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.heroku.sdk</groupId>
+						<artifactId>heroku-maven-plugin</artifactId>
+						<configuration>
+							<appName>auction-prod</appName>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
 			<properties>
-				<spring.profiles.active>dev</spring.profiles.active>
+				<spring.profiles.active>prod</spring.profiles.active>
 			</properties>
 			<dependencies>
 				<dependency>
