@@ -13,7 +13,6 @@
 	<artifactId>auction</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>auction</name>
-	<packaging>war</packaging>
 	<description>Auction attempt</description>
 	<properties>
 		<java.version>11</java.version>
@@ -49,6 +48,11 @@
 	</profiles>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
