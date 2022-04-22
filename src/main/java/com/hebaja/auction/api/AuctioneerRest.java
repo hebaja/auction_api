@@ -23,33 +23,30 @@ import com.hebaja.auction.service.AuctioneerService;
 
 @RestController
 @CrossOrigin
-@RequestMapping("/api")
+@RequestMapping("/api/auctioneer")
 public class AuctioneerRest {
 	
-	private final String TAG = "[AuctioneerRest] ";
+	private static final String TAG = AuctioneerRest.class.toString();
 	
 	@Autowired
 	private AuctioneerService service;
 	
-	@GetMapping("auctioneer-auctions/{id}")
+	@GetMapping("auctions/{auctioneerId}")
 	@Cacheable(value = "auctioneer-auctions")
-	public ResponseEntity<AuctioneerAuctionsDto> auctioneerId(@PathVariable("id") Long id) {
-		if(id != null) {
-			Auctioneer auctioneer = service.findById(id);
-			
-			Collections.sort(auctioneer.getAuctions());
-			
-			auctioneer.getAuctions().forEach(auction -> {
-				Collections.sort(auction.getLots());
-			});
-			
+	public ResponseEntity<AuctioneerAuctionsDto> auctioneerId(@PathVariable("auctioneerId") Long auctioneerId) {
+		if(auctioneerId != null) {
+			Auctioneer auctioneer = service.findById(auctioneerId);
+//			Collections.sort(auctioneer.getAuctions());
+//			auctioneer.getAuctions().forEach(auction -> {
+//				Collections.sort(auction.getLots());
+//			});
+			auctioneer.sortAuctions();
 			return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
 		}
 		return ResponseEntity.notFound().build();
-		
 	}
 	
-	@GetMapping("auctioneer-auctions/email/{email}")
+	@GetMapping("auctions/email/{email}")
 	@Cacheable(value = "auctioneer-auctions")
 	public ResponseEntity<AuctioneerAuctionsDto> auctioneerEmail(@PathVariable("email") String email) {
 		if(email != null) {
@@ -59,13 +56,13 @@ public class AuctioneerRest {
 		return ResponseEntity.notFound().build();
 	}
 	
-	@GetMapping("auctioneer/{id}")
+	@GetMapping("{id}")
 	public AuctioneerDto auctioneer(@PathVariable("id") Long id) {
 		Auctioneer auctioneer = service.findById(id);
 		return AuctioneerDto.convert(auctioneer);
 	}
 	
-	@PostMapping("auctioneer/delete")
+	@PostMapping("delete")
 	public ResponseEntity<?> deleteAuctioneer(@RequestBody DeleteAuctioneerForm form) {
 		if(form != null) {
 			Auctioneer auctioneer = service.findById(form.getId());

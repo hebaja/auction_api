@@ -8,10 +8,12 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hebaja.auction.dto.AuctioneerAuctionsDto;
 import com.hebaja.auction.dto.GroupPlayerDto;
 import com.hebaja.auction.form.ActivateGroupPlayerForm;
 import com.hebaja.auction.form.DeleteGroupPlayerForm;
@@ -27,10 +29,10 @@ import com.hebaja.auction.service.PlayerService;
 
 @RestController
 @CrossOrigin
-@RequestMapping("/api")
+@RequestMapping("/api/group-player")
 public class GroupPlayersRest {
 	
-	private final static String TAG = "[GroupPlayerRest] ";
+	private final static String TAG = GroupPlayersRest.class.toString();
 
 	@Autowired
 	private GroupPlayerService groupService;
@@ -41,36 +43,21 @@ public class GroupPlayersRest {
 	@Autowired
 	private PlayerService playerService;
 	
-	@PostMapping("group-player/activate")
+	@PostMapping("change-state")
 	@CacheEvict(value = "auctioneer-auctions", allEntries = true)
-	public ResponseEntity<List<GroupPlayerDto>> activate(@RequestBody ActivateGroupPlayerForm form) {
-		
-		try {
-			List<GroupPlayer> groupPlayerList = fetchGroupPlayerAndChange(form, true);
-			return ResponseEntity.ok(GroupPlayerDto.convertToList(groupPlayerList));
-		} catch (Exception e) {
-			e.printStackTrace();
+	public ResponseEntity<AuctioneerAuctionsDto> activate(@RequestBody ActivateGroupPlayerForm form) {
+		if(form != null) {
+			GroupPlayer groupPlayer = groupService.findById(form.getGroupPlayerId());
+			changeState(groupPlayer, !form.isGroupActive());
+			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
+			return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
 		}
-		
 		return ResponseEntity.notFound().build();
 	}
 
-	@PostMapping("group-player/deactivate")
+	@PostMapping("register")
 	@CacheEvict(value = "auctioneer-auctions", allEntries = true)
-	public ResponseEntity<List<GroupPlayerDto>> deactivate(@RequestBody ActivateGroupPlayerForm form) {
-		
-		try {
-			List<GroupPlayer> groupPlayerList = fetchGroupPlayerAndChange(form, false);
-			return ResponseEntity.ok(GroupPlayerDto.convertToList(groupPlayerList));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return ResponseEntity.notFound().build();
-	}
-	
-	@PostMapping("group-player/register")
-	@CacheEvict(value = "auctioneer-auctions", allEntries = true)
-	public ResponseEntity<GroupPlayerDto> register(@RequestBody RegisterGroupPlayerForm form) {
+	public ResponseEntity<AuctioneerAuctionsDto> register(@RequestBody RegisterGroupPlayerForm form) {
 		
 		if(form != null) {
 			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
@@ -80,14 +67,14 @@ public class GroupPlayersRest {
 			groupPlayer.setAuctioneer(auctioneer);
 			
 			form.getPlayers().forEach(player -> {
-				players.add(new Player(player.getName(), player.getWalletValue(), groupPlayer));  
+				players.add(new Player(player.getPlayerName(), player.getWalletValue(), groupPlayer));  
 			});
 			
 			groupPlayer.setPlayers(players);
 			
 			try {
-				GroupPlayer savedGroupPlayer = groupService.save(groupPlayer);
-				return ResponseEntity.ok(GroupPlayerDto.convert(savedGroupPlayer));
+				groupService.save(groupPlayer);
+				return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -95,12 +82,13 @@ public class GroupPlayersRest {
 		return ResponseEntity.notFound().build();
 	}
 	
-	@PostMapping("group-player/update")
+	@PutMapping
 	@CacheEvict(value = "auctioneer-auctions", allEntries = true)
-	public ResponseEntity<GroupPlayerDto> update(@RequestBody UpdateGroupPlayerForm form) {
+	public ResponseEntity<AuctioneerAuctionsDto> update(@RequestBody UpdateGroupPlayerForm form) {
 		if(form != null) {
 			
 			GroupPlayer groupPlayer = groupService.findById(form.getGroupPlayerId());
+			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
 			List<Player> playersToRemove = new ArrayList<Player>();
 			
 			groupPlayer.getPlayers().forEach(player -> {				
@@ -126,33 +114,29 @@ public class GroupPlayersRest {
 			});
 															
 			groupPlayer.setName(form.getGroupPlayerName());
-			GroupPlayer groupPlayerSaved = groupService.save(groupPlayer);
+			groupService.save(groupPlayer);
 			
-			return ResponseEntity.ok(GroupPlayerDto.convert(groupPlayerSaved));
+			return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
 		}
 		return ResponseEntity.notFound().build();
 	}
 	
-	@PostMapping("group-player/delete")
+	@PostMapping("delete")
 	@CacheEvict(value = "auctioneer-auctions", allEntries = true)
-	public ResponseEntity<List<GroupPlayerDto>> delete(@RequestBody DeleteGroupPlayerForm form) {
+	public ResponseEntity<AuctioneerAuctionsDto> delete(@RequestBody DeleteGroupPlayerForm form) {
 		if(form != null) {
 			GroupPlayer groupPlayer = groupService.findById(form.getGroupPlayerId());
 			groupService.delete(groupPlayer);
 			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
-			List<GroupPlayer> groupPlayers = auctioneer.getGroupPlayers();
-			return ResponseEntity.ok(GroupPlayerDto.convertToList(groupPlayers));
+			auctioneer.sortAuctions();
+			return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
 		}
-		return ResponseEntity.notFound().build();
+		return ResponseEntity.badRequest().build();
 	}
 	
-	private List<GroupPlayer> fetchGroupPlayerAndChange(ActivateGroupPlayerForm form, boolean active) {
-		GroupPlayer groupPlayer = groupService.findById(form.getGroupPlayerId());
+	private void changeState(GroupPlayer groupPlayer, boolean active) {
 		groupPlayer.setActive(active);
-		
 		groupService.save(groupPlayer);
-		List<GroupPlayer> groupPlayerList = groupService.findAllByAuctioneerId(form.getAuctioneerId());
-		return groupPlayerList;
 	}
 	
 }

@@ -26,8 +26,9 @@ public class TestApiRest {
 	private AuctioneerService service;
 	
 	@GetMapping
-	public String test() {
-		return "It is working!";
+	public ResponseEntity<String> test() {
+		System.out.println("running test");
+		return ResponseEntity.ok("it is running");
 	}
 	
 	@GetMapping("creating-a-user")

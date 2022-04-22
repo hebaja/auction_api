@@ -13,6 +13,8 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.hebaja.auction.enums.BidAnalysisResult;
+
 class AuctioneerTest {
 
     private Auctioneer auctioneer;
@@ -26,7 +28,6 @@ class AuctioneerTest {
         this.auctioneer = new Auctioneer("auctioneer", "test@test.com");
         Auction auction = new Auction("test_auction");
         auction.setAuctioneer(auctioneer);
-//        Asset asset = new Asset("MyAsset", "Test Asset");
         lot = new Lot("My Lot", "My lot description");
         
         List<Lot> lots = new ArrayList<>();
@@ -61,8 +62,8 @@ class AuctioneerTest {
     	Bid firstBid = player2.makeBid(new BigDecimal("150.0"), lot);
     	
     	if(firstBid != null) {
-    		Boolean result = auctioneer.analiseBid(lot, firstBid);
-    		assertTrue(result);
+    		BidAnalysisResult result = auctioneer.analiseBid(lot, firstBid);
+    		assertTrue(result.equals(BidAnalysisResult.BID_VALID));
     	} else {
     		fail();
     	}
@@ -70,8 +71,8 @@ class AuctioneerTest {
         Bid secondBid = player1.makeBid(new BigDecimal("100.0"), lot);
 
         if (secondBid != null) {
-            Boolean result = auctioneer.analiseBid(lot, secondBid);
-            assertFalse(result);
+            BidAnalysisResult result = auctioneer.analiseBid(lot, secondBid);
+            assertTrue(result.equals(BidAnalysisResult.BID_LOWER_OR_EQUAL_THAN_LAST));
         } else {
             fail();
         }
@@ -85,8 +86,8 @@ class AuctioneerTest {
     	Bid firstBid = player2.makeBid(new BigDecimal("150.0"), lot);
     	
     	if(firstBid != null) {
-    		Boolean result = auctioneer.analiseBid(lot, firstBid);
-    		assertTrue(result);
+    		BidAnalysisResult result = auctioneer.analiseBid(lot, firstBid);
+    		assertTrue(result.equals(BidAnalysisResult.BID_VALID));
     	} else {
     		fail();
     	}
@@ -94,8 +95,8 @@ class AuctioneerTest {
         Bid secondBid = player1.makeBid(new BigDecimal("200.00"), lot);
 
         if (secondBid != null) {
-            Boolean result = auctioneer.analiseBid(lot, secondBid);
-            assertTrue(result);
+        	BidAnalysisResult result = auctioneer.analiseBid(lot, secondBid);
+            assertTrue(result.equals(BidAnalysisResult.BID_VALID));
         } else {
             fail();
         }
@@ -109,8 +110,8 @@ class AuctioneerTest {
     	Bid firstBid = player2.makeBid(new BigDecimal("100.0"), lot);
     	
     	if(firstBid != null) {
-    		Boolean result = auctioneer.analiseBid(lot, firstBid);
-    		assertTrue(result);
+    		BidAnalysisResult result = auctioneer.analiseBid(lot, firstBid);
+    		assertTrue(result.equals(BidAnalysisResult.BID_VALID));
     	} else {
     		fail();
     	}
@@ -118,8 +119,8 @@ class AuctioneerTest {
         Bid bid = player1.makeBid(new BigDecimal("100.00"), lot);
 
         if (bid != null) {
-            Boolean result = auctioneer.analiseBid(lot, bid);
-            assertFalse(result);
+        	BidAnalysisResult result = auctioneer.analiseBid(lot, bid);
+            assertTrue(result.equals(BidAnalysisResult.BID_LOWER_OR_EQUAL_THAN_LAST));
         } else {
             fail();
         }
@@ -177,9 +178,9 @@ class AuctioneerTest {
 
         this.auctioneer.finishLot(this.lot);
 
-        Boolean result = auctioneer.analiseBid(lot, player1.makeBid(new BigDecimal("450.0"), lot));
+        BidAnalysisResult result = auctioneer.analiseBid(lot, player1.makeBid(new BigDecimal("450.0"), lot));
 
-        assertFalse(result);
+        assertTrue(result.equals(BidAnalysisResult.BID_LOT_NOT_STARTED));
         assertEquals(lot.getBids().size(), 4);
 
     }
@@ -187,8 +188,8 @@ class AuctioneerTest {
     @Test
     void shouldNotAcceptPlayerBidCaseAuctioneerHasNotStartedLot() {
         Bid bid = player1.makeBid(new BigDecimal("100.0"), lot);
-        Boolean result = auctioneer.analiseBid(lot, bid);
-        assertFalse(result);
+        BidAnalysisResult result = auctioneer.analiseBid(lot, bid);
+        assertTrue(result.equals(BidAnalysisResult.BID_LOT_NOT_STARTED));
     }
 
     @Test

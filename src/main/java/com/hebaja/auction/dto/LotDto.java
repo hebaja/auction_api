@@ -21,6 +21,7 @@ public class LotDto {
     private boolean active;
     private boolean correct;
     private List<BidDto> bidsDto;
+    private boolean existActiveGroup;
     
     public LotDto(Lot lot) {
     	this.id = lot.getId();
@@ -28,14 +29,13 @@ public class LotDto {
     	this.setDescription(lot.getDescription());
     	this.startingBid = lot.getStartingBid();
     	this.active = lot.isActive();
-    	
     	Collections.sort(lot.getBids(), (bid, otherBid) -> bid.getValue().compareTo(otherBid.getValue()));
-    	
     	this.setBidsDto(lot.getBids().stream().map(BidDto::new).collect(Collectors.toList()));
 		this.correct = lot.isCorrect();
     	if(lot.getPricePaid() != null) {
     		this.pricePaid = lot.getPricePaid();
     	}
+    	existActiveGroup = lot.getAuction().getAuctioneer().getGroupPlayers().stream().anyMatch(group -> group.isActive());
     }
     
     public static LotDto convert(Lot lot) {
@@ -112,6 +112,14 @@ public class LotDto {
 
 	public void setCorrect(boolean correct) {
 		this.correct = correct;
+	}
+
+	public boolean isExistActiveGroup() {
+		return existActiveGroup;
+	}
+
+	public void setExistActiveGroup(boolean existActiveGroup) {
+		this.existActiveGroup = existActiveGroup;
 	}
 
 }

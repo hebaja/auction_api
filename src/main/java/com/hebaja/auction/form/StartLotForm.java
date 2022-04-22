@@ -4,17 +4,8 @@ import java.math.BigDecimal;
 
 public class StartLotForm {
 
-	private Long auctioneerId;
 	private Long lotId;
 	private BigDecimal startingBid;
-
-	public Long getAuctioneerId() {
-		return auctioneerId;
-	}
-
-	public void setAuctioneerId(Long auctioneerId) {
-		this.auctioneerId = auctioneerId;
-	}
 
 	public Long getLotId() {
 		return lotId;

@@ -74,6 +74,4 @@ public class Auction implements Comparable<Auction> {
 		return Long.compare(this.getId(), otherAuction.getId());
 	}
 	
-	
-	
 }

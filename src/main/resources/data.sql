@@ -1,5 +1,7 @@
 INSERT INTO auctioneer(name, email) VALUES('auctioneer', 'hebajabackup@gmail.com');
 
+INSERT INTO auctioneer_roles(auctioneer_id, role) values(1, 'ROLE_AUCTIONEER');
+
 INSERT INTO auction(title, auctioneer_id, finished) values ('First Auction', 1, false);
 INSERT INTO auction(title, auctioneer_id, finished) values ('Second Auction', 1, false);
 INSERT INTO auction(title, auctioneer_id, finished) values ('Third Auction', 1, false);

@@ -12,8 +12,10 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hebaja.auction.dto.AuctionDto;
@@ -42,7 +44,7 @@ import com.hebaja.auction.service.PlayerService;
 @RequestMapping("/api/auction")
 public class AuctionRest {
 	
-	private final String TAG = "[AuctionRest] ";
+	private static final String TAG = AuctionRest.class.toString();
 	
 	@Autowired
 	private AuctioneerService auctioneerService; 
@@ -62,34 +64,48 @@ public class AuctionRest {
 	@Autowired
 	private GroupPlayerService groupPlayerService;
 	
-	@PostMapping("register")
-	@CacheEvict(value = {"auctioneer-auctions", "player"}, allEntries = true)
-	public ResponseEntity<AuctioneerAuctionsDto> register(@RequestBody RegisterAuctionForm form) {
-		if(form != null) {
-			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
-			Auction auction = new Auction(form.getTitle());
-			List<Lot> lots = new ArrayList<Lot>();
-			form.getLots().forEach(formLot -> {
-				lots.add(new Lot(formLot.getTitle(), formLot.getDescription(), formLot.isCorrect(), auction));
-			});
-			auction.setLots(lots);
-			auction.setAuctioneer(auctioneer);
-			Auction savedAuction = auctionService.save(auction);
-			
-//			savedAuction.getLots().forEach(lot -> {
-//				System.out.println("[AuctionRest] lot id -> " + lot.getId());
-//				System.out.println("[AuctionRest] lot title -> " + lot.getTitle());
-//				System.out.println("[AuctionRest] lot description -> " + lot.getDescription());
-//				System.out.println("[AuctionRest] lot is correct -> " + lot.isCorrect());
-//				System.out.println("[AuctionRest] lot is auction -> " + lot.getAuction().getTitle());
-//			});	
-			return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
-			
+	@GetMapping("{auctionId}")
+	public ResponseEntity<AuctionDto> auction(@PathVariable("auctionId") Long auctionId) {
+		if(auctionId != null) {
+			Auction auction = auctionService.findById(auctionId);
+			if(auction.isFinished()) {
+				List<Player> players = fetchPlayersForAuction(auction);
+				auction.setLots(auction.getLots().stream().distinct().collect(Collectors.toList()));
+				return ResponseEntity.ok(new AuctionDto(auction, players));
+			} else {
+				auction.setLots(auction.getLots().stream().distinct().collect(Collectors.toList()));
+				return ResponseEntity.ok(new AuctionDto(auction, null));
+			}
 		}
-		return ResponseEntity.notFound().build();
+		return ResponseEntity.badRequest().build();
 	}
 	
-	@PostMapping("update")
+	@GetMapping("lot/{lotId}")
+	public ResponseEntity<LotDto> lot(@PathVariable("lotId") Long lotId) {
+		if(lotId != null) {
+			Lot lot = lotService.findById(lotId);
+			return ResponseEntity.ok(new LotDto(lot));
+		} 
+		return ResponseEntity.badRequest().build();
+	}
+	
+	@PostMapping("register")
+	@CacheEvict(value = {"auctioneer-auctions", "player"}, allEntries = true)
+	public ResponseEntity<AuctionDto> register(@RequestBody RegisterAuctionForm form) {
+		System.out.println(form.getTitle());
+		Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
+		Auction auction = new Auction(form.getTitle());
+		List<Lot> lots = new ArrayList<Lot>();
+		form.getLots().forEach(formLot -> {
+			lots.add(new Lot(formLot.getTitle(), formLot.getDescription(), formLot.isCorrect(), auction));
+		});
+		auction.setLots(lots);
+		auction.setAuctioneer(auctioneer);
+		Auction savedAuction = auctionService.save(auction);
+		return ResponseEntity.ok(AuctionDto.convert(savedAuction, null));
+	}
+	
+	@PutMapping
 	@CacheEvict(value = {"auctioneer-auctions", "player"}, allEntries = true)
 	public ResponseEntity<AuctionDto> update(@RequestBody AuctionForm form) {
 		
@@ -139,31 +155,7 @@ public class AuctionRest {
 			try {
 				Auction finishedAuction = auctionService.save(auction);
 				
-				List<GroupPlayer> groupsWithBidsInAuciton = new ArrayList<GroupPlayer>();
-				List<Player> players = new ArrayList<Player>();
-				
-				finishedAuction.getLots().forEach(lot -> {
-					lot.getBids().forEach(bid -> {
-						groupsWithBidsInAuciton.add(bid.getPlayer().getGroupPlayers());
-					});
-				});
-				
-				List<GroupPlayer> groupsWithBidsInAucitonFiltered = groupsWithBidsInAuciton.stream().distinct().collect(Collectors.toList());
-				
-				groupsWithBidsInAucitonFiltered.forEach(groupPlayer -> {
-					groupPlayer.getPlayers().forEach(player -> {
-						player.getAcquiredLots().forEach(lot -> {
-							if(lot.isCorrect()) {
-								player.incrementScore();
-							}
-						});
-						players.add(player);
-					});
-				});
-				
-				Collections.sort(players, (player, otherPlayer) -> Integer.compare(otherPlayer.getScore(), player.getScore()));
-				List<Lot> lotListWithoutDuplicates = finishedAuction.getLots().stream().distinct().collect(Collectors.toList());
-				finishedAuction.setLots(lotListWithoutDuplicates);
+				List<Player> players = fetchPlayersForAuction(finishedAuction);
 				
 				return ResponseEntity.ok(AuctionDto.convert(finishedAuction, players));
 			} catch (Exception e) {
@@ -174,14 +166,41 @@ public class AuctionRest {
 		return ResponseEntity.notFound().build();
 	}
 
+	private List<Player> fetchPlayersForAuction(Auction auction) {
+		List<GroupPlayer> groupsWithBidsInAuciton = new ArrayList<GroupPlayer>();
+		List<Player> players = new ArrayList<Player>();
+		
+		auction.getLots().forEach(lot -> {
+			lot.getBids().forEach(bid -> {
+				groupsWithBidsInAuciton.add(bid.getPlayer().getGroupPlayers());
+			});
+		});
+		
+		List<GroupPlayer> groupsWithBidsInAucitonFiltered = groupsWithBidsInAuciton.stream().distinct().collect(Collectors.toList());
+		
+		groupsWithBidsInAucitonFiltered.forEach(groupPlayer -> {
+			groupPlayer.getPlayers().forEach(player -> {
+				player.getAcquiredLots().forEach(lot -> {
+					if(lot.isCorrect()) {
+						player.incrementScore();
+					}
+				});
+				players.add(player);
+			});
+		});
+		
+		Collections.sort(players, (player, otherPlayer) -> Integer.compare(otherPlayer.getScore(), player.getScore()));
+		List<Lot> lotListWithoutDuplicates = auction.getLots().stream().distinct().collect(Collectors.toList());
+		auction.setLots(lotListWithoutDuplicates);
+		return players;
+	}
+
 	@PostMapping("start-lot")
 	@CacheEvict(value = {"auctioneer-auctions", "player"}, allEntries = true)
 	public ResponseEntity<LotDto> startLot(@RequestBody StartLotForm form) {
 		try {
 			Lot lot = lotService.findById(form.getLotId());
-		
-			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
-			
+			Auctioneer auctioneer = auctioneerService.findById(lot.getAuction().getAuctioneer().getId());
 			auctioneer.startLot(lot, form.getStartingBid());
 			
 			auctioneer.getAuctions().forEach(auction -> {
@@ -200,10 +219,6 @@ public class AuctionRest {
 					});
 				});	
 			}
-			
-//			auctioneer.setWorker(new Worker());
-//			new Thread(new AuctioneerAnaliseBidTask());
-			
 			return ResponseEntity.ok(LotDto.convert(savedLot));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -213,10 +228,10 @@ public class AuctionRest {
 	
 	@PostMapping("finish-lot")
 	@CacheEvict(value = {"auctioneer-auctions", "player"}, allEntries = true)
-	public ResponseEntity<AuctioneerAuctionsDto> finishLot(@RequestBody FinishLotForm form) {
+	public ResponseEntity<AuctionDto> finishLot(@RequestBody FinishLotForm form) {
 		if(form != null) {
 			Lot lot = lotService.findById(form.getLotId());
-			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
+			Auctioneer auctioneer = lot.getAuction().getAuctioneer();
 			Lot lotFinished = auctioneer.finishLot(lot);
 			if(lotFinished != null) {
 				lotService.save(lotFinished);
@@ -224,7 +239,7 @@ public class AuctionRest {
 					auction.setLots(auction.getLots().stream().distinct().collect(Collectors.toList()));
 					Collections.sort(auction.getLots());
 				});
-				return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
+				return ResponseEntity.ok(new AuctionDto(lot.getAuction(), null));
 			} else {
 				return ResponseEntity.badRequest().build();
 			}
@@ -233,11 +248,11 @@ public class AuctionRest {
 		}
 	}
 	
-	@PostMapping("cancel-lot")
+	@GetMapping("reset-lot/{lotId}")
 	@CacheEvict(value = {"auctioneer-auctions", "player"}, allEntries = true)
-	public ResponseEntity<LotDto> cancelLot(@RequestBody FinishLotForm form) {
-		if(form != null) {
-			Lot lot = lotService.findById(form.getLotId());
+	public ResponseEntity<AuctionDto> resetLot(@PathVariable("lotId") Long lotId) {
+		if(lotId != null) {
+			Lot lot = lotService.findById(lotId);
 									
 			if(lot != null) {
 				lot.setPricePaid(null);
@@ -246,7 +261,8 @@ public class AuctionRest {
 				lot.getBids().forEach(bid -> bidService.delete(bid));
 				lot.getBids().clear();
 				Lot lotChanged = lotService.save(lot);
-				return ResponseEntity.ok(LotDto.convert(lotChanged));
+				
+				return ResponseEntity.ok(new AuctionDto(lotChanged.getAuction(), null));
 			} else {
 				return ResponseEntity.badRequest().build();
 			}
@@ -293,12 +309,17 @@ public class AuctionRest {
 	
 	@PostMapping("delete")
 	@CacheEvict(value = {"auctioneer-auctions", "player"}, allEntries = true)
-	public ResponseEntity<?> delete(@RequestBody AuctionForm form) {
+	public ResponseEntity<AuctioneerAuctionsDto> delete(@RequestBody AuctionForm form) {
 		if(form != null) {
 			try {
 				Auction auctionToBeRemoved = auctionService.findById(form.getId());
-				auctionService.delete(auctionToBeRemoved);			
-				return ResponseEntity.accepted().build();
+				auctionService.delete(auctionToBeRemoved);
+				
+				Long auctioneerId = auctionToBeRemoved.getAuctioneer().getId();
+				
+				Auctioneer auctioneer = auctioneerService.findById(auctioneerId);
+				auctioneer.sortAuctions();
+				return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
 			} catch (Exception e) {
 				e.printStackTrace();
 				return ResponseEntity.badRequest().build();
@@ -343,22 +364,4 @@ public class AuctionRest {
 		return ResponseEntity.notFound().build();
 	}
 	
-//	private List<Player> retrievePlayersFromActiveGroups(Auction auction, Auction finishedAuction) {
-//		List<GroupPlayer> groupPlayerList = finishedAuction.getAuctioneer().getGroupPlayers().stream().filter(groupPlayer -> groupPlayer.isActive()).collect(Collectors.toList());
-//		List<Player> players = new ArrayList<Player>();
-//		if(!groupPlayerList.isEmpty() && auction.isFinished()) {
-//			groupPlayerList.forEach(groupPlayer -> {
-//				groupPlayer.getPlayers().forEach(player -> {
-//					player.getAcquiredLots().forEach(lot -> {
-//						if(lot.isCorrect()) {
-//							player.setScore(player.getScore() + 1);
-//						}
-//					});
-//					players.add(player);
-//				});
-//			});
-//		}
-//		return players;
-//	}
-
 }

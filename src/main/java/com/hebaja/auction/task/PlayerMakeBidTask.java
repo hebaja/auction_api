@@ -2,13 +2,14 @@ package com.hebaja.auction.task;
 
 import java.util.concurrent.Callable;
 
+import com.hebaja.auction.enums.BidAnalysisResult;
 import com.hebaja.auction.model.Auctioneer;
 import com.hebaja.auction.model.Bid;
 import com.hebaja.auction.model.Player;
 import com.hebaja.auction.service.BidService;
 import com.hebaja.auction.service.LotService;
 
-public class PlayerMakeBidTask implements Callable<Boolean> {
+public class PlayerMakeBidTask implements Callable<BidAnalysisResult> {
 
 	private Worker worker;
 	private Player player;
@@ -29,10 +30,8 @@ public class PlayerMakeBidTask implements Callable<Boolean> {
 	}
 
 	@Override
-	public Boolean call() throws Exception {
+	public BidAnalysisResult call() throws Exception {
 		return worker.playerMakeBid(auctioneer, player, bid, lotId, bidService, lotService);
 	}
-	
-	
 
 }

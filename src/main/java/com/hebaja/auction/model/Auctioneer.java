@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -15,10 +16,13 @@ import javax.persistence.Transient;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 
+import com.hebaja.auction.enums.BidAnalysisResult;
 import com.hebaja.auction.task.Worker;
 
 @Entity
 public class Auctioneer extends User {
+	
+	private static final long serialVersionUID = 1L;
 
 	private static final String TAG = "[Auctioneer] ";
 
@@ -33,10 +37,19 @@ public class Auctioneer extends User {
     @Cascade(CascadeType.DELETE)
     private List<Auction> auctions;
     
+    @Column(unique = true)
     private String email;
     
     @Transient
     private Worker worker;
+    
+    @Transient
+    public void sortAuctions() {
+    	Collections.sort(getAuctions());
+		getAuctions().forEach(auction -> {
+			Collections.sort(auction.getLots());
+		});
+    }
     
     public Auctioneer() {
 		super();
@@ -47,17 +60,17 @@ public class Auctioneer extends User {
 		this.email = email;
 	}
 
-	public Boolean analiseBid(Lot lotReceived, Bid bid) {
+	public BidAnalysisResult analiseBid(Lot lotReceived, Bid bid) {
         if(lotReceived.isActive() == true) {
         	if(bid.getPlayer().getGroupPlayers().isActive()) {
             	if(lotReceived.getBids().isEmpty()) {
             		if(bid.getValue().compareTo(lotReceived.getStartingBid()) >= 0) {
             			System.out.println(TAG + this.getClass().toString() + " --> accepting first bid of "  + bid.getPlayer().getName() + ". with value " + bid.getValue());
                         lotReceived.getBids().add(bid);
-                        return true;
+                        return BidAnalysisResult.BID_VALID;
             		} else {
             			System.out.println(TAG + this.getClass().toString() + " *** " + bid.getPlayer().getName() + ", you bid is lower than starting bid");
-            			return false;
+            			return BidAnalysisResult.BID_LOWER_THAN_STARTING;
             		}
             	} else {
             		Collections.sort(lotReceived.getBids(), (thisBid, otherBid) -> thisBid.getValue().compareTo(otherBid.getValue()));
@@ -66,20 +79,20 @@ public class Auctioneer extends User {
                     if(bid.getValue().compareTo(lastBid.getValue()) > 0) {
                         lotReceived.getBids().add(bid);
                         System.out.println(TAG + this.getClass().toString() + " --> accepting bid of "  + bid.getPlayer().getName() + ". with value " + bid.getValue());
-                        return true;
+                        return BidAnalysisResult.BID_VALID;
                     } else {
                         System.out.println(TAG + this.getClass().toString() + " *** " + bid.getPlayer().getName() + ", your bid is lower than last bid.");
-                        return false;
+                        return BidAnalysisResult.BID_LOWER_OR_EQUAL_THAN_LAST;
                     }
             	}
         			
         	} else {
         		System.out.println(TAG + this.getClass().toString() +  " *** " + bid.getPlayer().getName() + ", your group is not active.");
-        		return false;
+        		return BidAnalysisResult.BID_GROUP_NOT_ACTIVE;
         	}
         } else {
             System.out.println(TAG + this.getClass().toString() +  " *** " + bid.getPlayer().getName() + ", this lot has not been started yet.");
-            return false;
+            return BidAnalysisResult.BID_LOT_NOT_STARTED;
         }
     }
 	
@@ -119,12 +132,6 @@ public class Auctioneer extends User {
 
             lotReceived.setActive(false);
 
-//            System.out.println(this.getClass().toString() +  " ¬¬¬ lot is finished with following bids:");
-//            lotReceived.getBids().forEach(bid -> {
-//                System.out.println(this.getClass().toString() +  " -bid : " + bid.getValue() + " / player -> " + bid.getPlayer().getName());
-//            });
-//            System.out.println(this.getClass().toString() +  " ¬¬¬ winner of lot is " + lastBid.getPlayer().getName() + ". sold for " + lastBid.getValue());
-            
             return lotReceived;
     	} else {
     		return null;

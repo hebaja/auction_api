@@ -4,15 +4,15 @@ import java.math.BigDecimal;
 
 public class PlayerForm {
 
-	private String name;
+	private String playerName;
 	private BigDecimal walletValue;
 
-	public String getName() {
-		return name;
+	public String getPlayerName() {
+		return playerName;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setPlayerName(String playerName) {
+		this.playerName = playerName;
 	}
 
 	public BigDecimal getWalletValue() {

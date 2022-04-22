@@ -2,6 +2,7 @@ package com.hebaja.auction.task;
 
 import java.math.BigDecimal;
 
+import com.hebaja.auction.enums.BidAnalysisResult;
 import com.hebaja.auction.model.Auctioneer;
 import com.hebaja.auction.model.Bid;
 import com.hebaja.auction.model.Lot;
@@ -15,40 +16,45 @@ public class Worker {
 	
 	private boolean auctioneerIsAnalisingBid = false;
 	
-	public Boolean playerMakeBid(Auctioneer auctioneer, Player player, Bid bid, Long lotId, BidService bidService, LotService lotService) throws InterruptedException {
+	public BidAnalysisResult playerMakeBid(Auctioneer auctioneer, Player player, Bid bid, Long lotId, BidService bidService, LotService lotService) throws InterruptedException {
 		System.out.println(TAG + "is auctioneer analising a bid? " + auctioneerIsAnalisingBid);
 		
 		synchronized (this) {
 			
 			while(auctioneerIsAnalisingBid) {
-				System.out.println(TAG + player.getName() + " is waiting...");
 				this.wait();
 			}
 			
 			this.auctioneerIsAnalisingBid = true;
-			
-			System.out.println(TAG + "auctioneer analising is NOW ANALISING a bid");
-
 			Lot lot = lotService.findById(lotId);
-						
-			Boolean result = auctioneer.analiseBid(lot, bid);
-				
-			if(result) {
-				System.out.println(TAG + player.getName() + " made a valid bid");
-				bidService.save(bid);
-				this.auctioneerIsAnalisingBid = false;
-				this.notifyAll();
-				return result;
+			BidAnalysisResult result = auctioneer.analiseBid(lot, bid);
+			
+			switch(result) {
+				case BID_VALID:
+					bidService.save(bid);
+					this.auctioneerIsAnalisingBid = false;
+					this.notifyAll();
+			    break;
+				case BID_GROUP_NOT_ACTIVE:
+					this.auctioneerIsAnalisingBid = false;
+					this.notifyAll();
+			    break;
+				case BID_LOT_NOT_STARTED:
+					this.auctioneerIsAnalisingBid = false;
+					this.notifyAll();
+				break;
+				case BID_LOWER_OR_EQUAL_THAN_LAST:
+					this.auctioneerIsAnalisingBid = false;
+					this.notifyAll();
+				break;
+				case BID_LOWER_THAN_STARTING:
+					this.auctioneerIsAnalisingBid = false;
+					this.notifyAll();
+				break;
+			  default:
+			    System.out.println(TAG + "unknown result");
 			}
-						
-			System.out.println(TAG + player.getName() + " made an INVALID bid");
-			
-			this.auctioneerIsAnalisingBid = false;
-			this.notifyAll();
-			
 			return result;
-			
 		}
 	}
-	
 }

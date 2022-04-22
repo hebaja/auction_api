@@ -19,11 +19,13 @@ import javax.persistence.Transient;
 @Entity
 public class Player extends User{
 
-    @Id
+    private static final long serialVersionUID = 1L;
+
+	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Lot> acquiredLots = new ArrayList<>();
     
     @ManyToOne(fetch = FetchType.LAZY)

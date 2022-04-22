@@ -1,36 +1,73 @@
 package com.hebaja.auction.config;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 
+@Configuration
+@Service
 public class FirebaseConfig {
 	
-	public void configure() throws IOException {
+	private static final String TAG = FirebaseConfig.class.toString();
+
+	public void configure(Environment environment) throws IOException {
 		
 		InputStream firebaseCredentialStream = null;
-		try {
-			firebaseCredentialStream = createFirebaseCredential();
-		} catch (Exception e) {
-			e.printStackTrace();
+		if(!firebaseAppHasBeenInitialized()) {
+			if(Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
+				FileInputStream serviceAccount = new FileInputStream("/home/focus/my_developer_key/firebase/auction-5271a-firebase-adminsdk-4r35f-acd271f679.json");
+				FirebaseOptions options = FirebaseOptions
+						.builder()
+						.setCredentials(GoogleCredentials.fromStream(serviceAccount))
+						.build();
+				FirebaseApp.initializeApp(options);
+				System.out.println(TAG + " Starting firebase in " + environment.getActiveProfiles()[0] + " mode with app name " + FirebaseApp.DEFAULT_APP_NAME );
+			} else if(Arrays.asList(environment.getActiveProfiles()).contains("prod")) {
+				try {
+					firebaseCredentialStream = createFirebaseCredential();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				
+				System.out.println(firebaseCredentialStream);
+				
+				FirebaseOptions options = FirebaseOptions
+						.builder()
+						.setCredentials(GoogleCredentials.fromStream(firebaseCredentialStream))
+						.build();
+				FirebaseApp.initializeApp(options);
+				System.out.println(TAG + " Starting firebase in " + environment.getActiveProfiles()[0] + " mode with app name " + FirebaseApp.DEFAULT_APP_NAME );
+			}
+		} else {
+			System.out.println(TAG + " Firebase has already been started in " + environment.getActiveProfiles()[0] + " mode with app name " + FirebaseApp.DEFAULT_APP_NAME);
 		}
-		
-		FirebaseOptions options = FirebaseOptions
-				.builder()
-				.setCredentials(GoogleCredentials.fromStream(firebaseCredentialStream))
-				.build();
-		
-		System.out.println(this.getClass().toString() + " starting firebase");
-		
-		FirebaseApp.initializeApp(options);
-		System.out.println("[FirebaseConfig] Starting firebase with app name: " + FirebaseApp.DEFAULT_APP_NAME );
+	}
+	
+	private boolean firebaseAppHasBeenInitialized() {
+		boolean hasBeenInitialized = false;
+		List<FirebaseApp> firebaseApps = FirebaseApp.getApps();
+		for(FirebaseApp app : firebaseApps){
+		    if(app.getName().equals(FirebaseApp.DEFAULT_APP_NAME)){
+		        hasBeenInitialized = true;
+		    }
+		}
+		return hasBeenInitialized;
 	}
 	
 	private InputStream createFirebaseCredential() throws Exception {
@@ -52,7 +89,10 @@ public class FirebaseConfig {
 	    String jsonString = mapper.writeValueAsString(firebaseCredential);
 
 	    //convert jsonString string to InputStream using Apache Commons
-	    return IOUtils.toInputStream(jsonString, StandardCharsets.UTF_8);
+	    
+	    InputStream inputStream = IOUtils.toInputStream(jsonString, StandardCharsets.UTF_8);
+	    
+	    return inputStream; 
 	}
 
 }

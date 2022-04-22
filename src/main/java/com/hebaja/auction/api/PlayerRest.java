@@ -7,6 +7,7 @@ import java.util.concurrent.Future;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hebaja.auction.dto.PlayerDto;
+import com.hebaja.auction.enums.BidAnalysisResult;
 import com.hebaja.auction.form.MakeBidForm;
 import com.hebaja.auction.model.Auction;
 import com.hebaja.auction.model.Auctioneer;
@@ -36,7 +38,7 @@ import com.hebaja.auction.task.Worker;
 @RequestMapping("/api/player")
 public class PlayerRest {
 	
-	private static final String TAG = "[PlayerRest] ";
+	private static final String TAG = PlayerRest.class.toString();
 
 	@Autowired
 	private PlayerService playerService;
@@ -60,9 +62,7 @@ public class PlayerRest {
 		Player player = playerService.findById(id);
 		
 		if(player != null) {
-			String auctioneerName = player.getGroupPlayers().getAuctioneer().getName();
-			Auctioneer auctioneer = auctioneerService.findByUsername(auctioneerName);
-			
+			Auctioneer auctioneer = auctioneerService.findById(player.getGroupPlayers().getAuctioneer().getId());
 			Auction activeAuction = auctioneer.getAuctions()
 					.stream()
 						.filter(auction -> auction.getLots().stream()
@@ -94,32 +94,49 @@ public class PlayerRest {
 		if(form != null) {
 		
 			Player player = playerService.findById(form.getPlayerId());
-			Auctioneer auctioneer = auctioneerService.findByUsername(player.getGroupPlayers().getAuctioneer().getName());
-			Lot lot = lotService.findById(form.getLotId());
-			Bid bid = player.makeBid(form.getValue(), lot);
 			
-			System.out.println(TAG + "worker -> " + worker);
-			if(lot != null) {
-				System.out.println(TAG + "lot -> " + lot.getTitle());
-			}
 			
-			ExecutorService threadPool = ThreadPoolService.getThreadPool();
-			
-			Future<Boolean> futureResult = threadPool.submit(new PlayerMakeBidTask(worker, auctioneer, player, bid, form.getLotId(), bidService, lotService));
-			
-			if(futureResult.get() != null) {
-				if(futureResult.get()) {
-					return ResponseEntity.ok(PlayerDto.convertWithActiveLot(player, lot));
-				} else {
-					return ResponseEntity.badRequest().build();
+			if(player.getGroupPlayers().isActive()) {
+				Auctioneer auctioneer = auctioneerService.findByUsername(player.getGroupPlayers().getAuctioneer().getName());
+				Lot lot = lotService.findById(form.getLotId());
+				Bid bid = player.makeBid(form.getValue(), lot);
+				
+				ExecutorService threadPool = ThreadPoolService.getThreadPool();
+				
+				Future<BidAnalysisResult> futureResult = threadPool.submit(new PlayerMakeBidTask(worker, auctioneer, player, bid, form.getLotId(), bidService, lotService));
+				
+				if(futureResult.get() != null) {
+					switch (futureResult.get()) {
+					case BID_VALID:
+						lot.getBids().add(bid);
+						return ResponseEntity.ok(PlayerDto.convertWithActiveLot(player, lot));
+					case BID_LOWER_OR_EQUAL_THAN_LAST:
+						return ResponseEntity.status(HttpStatus.CONFLICT).build();
+					case BID_LOWER_THAN_STARTING:
+						return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).build();
+					case BID_GROUP_NOT_ACTIVE:
+						return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+					case BID_LOT_NOT_STARTED: 
+						return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).build();
+					default:
+						return ResponseEntity.badRequest().build();
+					}
+//					if(futureResult.get() == BidAnalysisResult.BID_VALID) {
+//						lot.getBids().add(bid);
+//						return ResponseEntity.ok(PlayerDto.convertWithActiveLot(player, lot));
+//					} else {
+//						return ResponseEntity.badRequest().build();
+//					}
 				}
 				
+			} else {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 			}
+			
 			
 			
 		}
 		return ResponseEntity.notFound().build();
 	}
-	
 
 }

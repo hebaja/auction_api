@@ -4,6 +4,7 @@ public class ActivateGroupPlayerForm {
 
 	private Long auctioneerId;
 	private Long groupPlayerId;
+	private boolean groupActive;
 
 	public Long getGroupPlayerId() {
 		return groupPlayerId;
@@ -19,6 +20,14 @@ public class ActivateGroupPlayerForm {
 
 	public void setAuctioneerId(Long auctioneerId) {
 		this.auctioneerId = auctioneerId;
+	}
+
+	public boolean isGroupActive() {
+		return groupActive;
+	}
+
+	public void setGroupActive(boolean groupActive) {
+		this.groupActive = groupActive;
 	}
 	
 }
