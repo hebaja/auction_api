@@ -1,5 +1,7 @@
 package com.hebaja.auction.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,10 @@ public class AuctioneerService {
 
 	public void delete(Auctioneer auctioneer) {
 		repository.delete(auctioneer);
+	}
+
+	public List<Auctioneer> findAll() {
+		return repository.findAll();
 	}
 
 }

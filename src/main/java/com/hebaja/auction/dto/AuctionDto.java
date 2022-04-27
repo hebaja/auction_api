@@ -12,15 +12,19 @@ import com.hebaja.auction.model.Player;
 public class AuctionDto {
 	
 	private Long id;
+	private Long auctioneerId;
 	private String title;
 	private boolean finished;
+	private boolean favorite;
 	private List<LotDto> lotsDto;
 	private List<PlayerDto> playersDto = new ArrayList<PlayerDto>();
 
 	public AuctionDto(Auction auction, List<Player> players) {
 		this.id = auction.getId();
+		this.auctioneerId = auction.getAuctioneer().getId();
 		this.setTitle(auction.getTitle());
 		this.finished = auction.isFinished();
+		this.favorite = auction.isFavorite();
 		this.lotsDto = auction.getLots().stream().map(LotDto::new).collect(Collectors.toList());
 		if(players != null) {
 			players.forEach(player -> {
@@ -74,6 +78,22 @@ public class AuctionDto {
 
 	public void setPlayersDto(List<PlayerDto> playersDto) {
 		this.playersDto = playersDto;
+	}
+
+	public boolean isFavorite() {
+		return favorite;
+	}
+
+	public void setFavorite(boolean favorite) {
+		this.favorite = favorite;
+	}
+
+	public Long getAuctioneerId() {
+		return auctioneerId;
+	}
+
+	public void setAuctioneerId(Long auctioneerId) {
+		this.auctioneerId = auctioneerId;
 	}
 	
 }

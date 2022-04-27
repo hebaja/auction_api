@@ -1,7 +1,5 @@
 package com.hebaja.auction.api;
 
-import java.util.Collections;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.google.firebase.auth.FirebaseAuth;
 import com.hebaja.auction.dto.AuctioneerAuctionsDto;
 import com.hebaja.auction.dto.AuctioneerDto;
-import com.hebaja.auction.form.AuctioneerForm;
 import com.hebaja.auction.form.DeleteAuctioneerForm;
 import com.hebaja.auction.model.Auctioneer;
 import com.hebaja.auction.service.AuctioneerService;

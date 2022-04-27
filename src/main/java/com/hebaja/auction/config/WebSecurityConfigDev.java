@@ -30,6 +30,19 @@ public class WebSecurityConfigDev extends WebSecurityConfigurerAdapter {
 			.authorizeRequests()
 			.antMatchers(
 					HttpMethod.GET,
+					"/api/player",
+					"/api/reset-password",
+					"/api/test/**",
+					"/api/test",
+					"/api/auction/all")
+				.permitAll()
+			.antMatchers(
+					HttpMethod.POST,
+					"/api/player/**",
+					"/api/firebase-auth")
+				.permitAll()
+			.antMatchers(
+					HttpMethod.GET,
 //					"/api/auction",
 					"/api/auction/**",
 					"/api/auctioneer/**")
@@ -44,18 +57,6 @@ public class WebSecurityConfigDev extends WebSecurityConfigurerAdapter {
 					"/api/auction",
 					"/api/group-player")
 				.authenticated()
-			.antMatchers(
-					HttpMethod.GET,
-					"/api/player",
-					"/api/reset-password",
-					"/api/test/**",
-					"/api/test")
-				.permitAll()
-			.antMatchers(
-					HttpMethod.POST,
-					"/api/player/**",
-					"/api/firebase-auth")
-				.permitAll()
 			.anyRequest().permitAll()
 			.and().csrf().disable().headers().frameOptions().disable()
 			.and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

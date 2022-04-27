@@ -37,6 +37,10 @@ public class Auctioneer extends User {
     @Cascade(CascadeType.DELETE)
     private List<Auction> auctions;
     
+//    @OneToMany(mappedBy = "auctioneer", fetch = FetchType.LAZY)
+//    @Cascade(CascadeType.DELETE)
+//    private List<AuctionFavorite> favoriteAuctions;
+//    
     @Column(unique = true)
     private String email;
     
@@ -173,5 +177,6 @@ public class Auctioneer extends User {
 	public void setWorker(Worker worker) {
 		this.worker = worker;
 	}
+
 
 }

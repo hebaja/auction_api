@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hebaja.auction.dto.AuctionAuctioneerDto;
 import com.hebaja.auction.dto.AuctionDto;
 import com.hebaja.auction.dto.AuctioneerAuctionsDto;
 import com.hebaja.auction.dto.LotDto;
@@ -61,9 +62,6 @@ public class AuctionRest {
 	@Autowired
 	private PlayerService playerService;
 	
-	@Autowired
-	private GroupPlayerService groupPlayerService;
-	
 	@GetMapping("{auctionId}")
 	public ResponseEntity<AuctionDto> auction(@PathVariable("auctionId") Long auctionId) {
 		if(auctionId != null) {
@@ -78,6 +76,16 @@ public class AuctionRest {
 			}
 		}
 		return ResponseEntity.badRequest().build();
+	}
+	
+	@GetMapping("all")
+	public ResponseEntity<List<AuctionAuctioneerDto>> all() {
+		
+		List<Auction> auctions = auctionService.findAll();
+		
+		List<Auction> nonFavoriteAuctions = auctions.stream().filter(auction -> !auction.isFavorite()).collect(Collectors.toList());
+		
+		return ResponseEntity.ok(AuctionAuctioneerDto.convertToList(nonFavoriteAuctions));
 	}
 	
 	@GetMapping("lot/{lotId}")

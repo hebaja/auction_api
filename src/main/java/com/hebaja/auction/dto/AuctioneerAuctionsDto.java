@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.hebaja.auction.model.Auction;
 import com.hebaja.auction.model.Auctioneer;
 import com.hebaja.auction.model.GroupPlayer;
 import com.hebaja.auction.model.Player;
@@ -17,52 +18,68 @@ public class AuctioneerAuctionsDto {
 	private Long id;
 	private String name;
 	private List<AuctionDto> auctionsDto;
+	private List<AuctionDto> favoriteAuctionsDto;
 	private List<GroupPlayerDto> groupPlayerDto;
 	
 	public AuctioneerAuctionsDto(Auctioneer auctioneer) {
 		this.setId(auctioneer.getId());
 		this.setName(auctioneer.getName());
+		
 		if(auctioneer.getAuctions() != null) {
 			ArrayList<AuctionDto> auctionDtoList = new ArrayList<AuctionDto>();
+			ArrayList<AuctionDto> favoriteAuctionDtoList = new ArrayList<AuctionDto>();
 			Collections.sort(auctioneer.getAuctions(), (auction, otherAuction) -> auction.getTitle().compareTo(otherAuction.getTitle()));
 			auctioneer.getAuctions().forEach(auction -> {
-				if(auction.isFinished()) {
-					
-					List<GroupPlayer> groupsWithBidsInAuciton = new ArrayList<GroupPlayer>();
-					List<Player> players = new ArrayList<Player>();
-					
-					auction.getLots().forEach(lot -> {
-						lot.getBids().forEach(bid -> {
-							groupsWithBidsInAuciton.add(bid.getPlayer().getGroupPlayers());
-						});
-					});
-					
-					List<GroupPlayer> groupsWithBidsInAucitonFiltered = groupsWithBidsInAuciton.stream().distinct().collect(Collectors.toList());
-					
-					groupsWithBidsInAucitonFiltered.forEach(groupPlayer -> {
-						groupPlayer.getPlayers().forEach(player -> {
-							
-							player.getAcquiredLots().forEach(lot -> {
-								if(lot.isCorrect()) {
-									player.incrementScore();
-								}
-							});
-							players.add(player);
-						});
-					});
-					
-					Collections.sort(players, (player, otherPlayer) -> Integer.compare(otherPlayer.getScore(), player.getScore()));
-					auctionDtoList.add(new AuctionDto(auction, players));
+				if(!auction.isFavorite()) {
+					if(auction.isFinished()) {
+						fetchFinishedAuction(auctionDtoList, auction);
+					} else {
+						auctionDtoList.add(new AuctionDto(auction, null));
+					}
 				} else {
-					auctionDtoList.add(new AuctionDto(auction, null));
+					if(auction.isFinished()) {
+						fetchFinishedAuction(favoriteAuctionDtoList, auction);
+					} else {
+						favoriteAuctionDtoList.add(new AuctionDto(auction, null));
+					}
 				}
+				
 			});
 			this.setAuctionsDto(auctionDtoList);
+			this.setFavoriteAuctionsDto(favoriteAuctionDtoList);
 		}
 		if(auctioneer.getGroupPlayers() != null) {
 			Collections.sort(auctioneer.getGroupPlayers(), (group, otherGroup) -> group.getName().compareTo(otherGroup.getName()));
 			this.setGroupPlayerDto(auctioneer.getGroupPlayers().stream().map(GroupPlayerDto::new).collect(Collectors.toList()));	
 		}
+	}
+
+	private void fetchFinishedAuction(ArrayList<AuctionDto> auctionDtoList, Auction auction) {
+		List<GroupPlayer> groupsWithBidsInAuciton = new ArrayList<GroupPlayer>();
+		List<Player> players = new ArrayList<Player>();
+		
+		auction.getLots().forEach(lot -> {
+			lot.getBids().forEach(bid -> {
+				groupsWithBidsInAuciton.add(bid.getPlayer().getGroupPlayers());
+			});
+		});
+		
+		List<GroupPlayer> groupsWithBidsInAucitonFiltered = groupsWithBidsInAuciton.stream().distinct().collect(Collectors.toList());
+		
+		groupsWithBidsInAucitonFiltered.forEach(groupPlayer -> {
+			groupPlayer.getPlayers().forEach(player -> {
+				
+				player.getAcquiredLots().forEach(lot -> {
+					if(lot.isCorrect()) {
+						player.incrementScore();
+					}
+				});
+				players.add(player);
+			});
+		});
+		
+		Collections.sort(players, (player, otherPlayer) -> Integer.compare(otherPlayer.getScore(), player.getScore()));
+		auctionDtoList.add(new AuctionDto(auction, players));
 	}
 
 	public String getName() {
@@ -101,5 +118,18 @@ public class AuctioneerAuctionsDto {
 	
 	public static AuctioneerAuctionsDto convert(Auctioneer auctioneer) {
 		return new AuctioneerAuctionsDto(auctioneer); 
+	}
+	
+	public static List<AuctioneerAuctionsDto> convertToList(List<Auctioneer> auctioneers) {
+		return auctioneers.stream().map(AuctioneerAuctionsDto::new).collect(Collectors.toList());
+	}
+
+	@JsonProperty("favoriteAuctions")
+	public List<AuctionDto> getFavoriteAuctionsDto() {
+		return favoriteAuctionsDto;
+	}
+
+	public void setFavoriteAuctionsDto(List<AuctionDto> favoriteAuctionsDto) {
+		this.favoriteAuctionsDto = favoriteAuctionsDto;
 	}
 }
