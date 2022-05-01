@@ -20,6 +20,7 @@ import com.hebaja.auction.form.DeleteGroupPlayerForm;
 import com.hebaja.auction.form.RegisterGroupPlayerForm;
 import com.hebaja.auction.form.UpdateGroupPlayerForm;
 import com.hebaja.auction.form.UpdatePlayerForm;
+import com.hebaja.auction.model.Auction;
 import com.hebaja.auction.model.Auctioneer;
 import com.hebaja.auction.model.GroupPlayer;
 import com.hebaja.auction.model.Player;
@@ -50,7 +51,14 @@ public class GroupPlayersRest {
 			GroupPlayer groupPlayer = groupService.findById(form.getGroupPlayerId());
 			changeState(groupPlayer, !form.isGroupActive());
 			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
-			return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
+			
+			List<Auction> auctions = auctioneer.getAuctions();
+			List<Auction> favoriteAuctions = auctioneerService.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
+			
+			auctioneer.sortAuctions();
+			List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
+			
+			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctions, sortFavoriteAuctions));
 		}
 		return ResponseEntity.notFound().build();
 	}
@@ -71,10 +79,16 @@ public class GroupPlayersRest {
 			});
 			
 			groupPlayer.setPlayers(players);
-			
 			try {
 				groupService.save(groupPlayer);
-				return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
+				
+				List<Auction> auctions = auctioneer.getAuctions();
+				List<Auction> favoriteAuctions = auctioneerService.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
+				
+				auctioneer.sortAuctions();
+				List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
+				
+				return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctions, sortFavoriteAuctions));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -112,11 +126,17 @@ public class GroupPlayersRest {
 					groupPlayer.add(player);
 				}
 			});
-															
+			
 			groupPlayer.setName(form.getGroupPlayerName());
 			groupService.save(groupPlayer);
 			
-			return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
+			List<Auction> auctions = auctioneer.getAuctions();
+			List<Auction> favoriteAuctions = auctioneerService.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
+			
+			auctioneer.sortAuctions();
+			List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
+			
+			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctions, sortFavoriteAuctions));
 		}
 		return ResponseEntity.notFound().build();
 	}
@@ -128,8 +148,14 @@ public class GroupPlayersRest {
 			GroupPlayer groupPlayer = groupService.findById(form.getGroupPlayerId());
 			groupService.delete(groupPlayer);
 			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
+			
+			List<Auction> auctions = auctioneer.getAuctions();
+			List<Auction> favoriteAuctions = auctioneerService.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
+			
 			auctioneer.sortAuctions();
-			return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
+			List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
+			
+			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctions, sortFavoriteAuctions));
 		}
 		return ResponseEntity.badRequest().build();
 	}

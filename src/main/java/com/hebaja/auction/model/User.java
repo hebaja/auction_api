@@ -28,11 +28,11 @@ public abstract class User implements UserDetails {
     private long id;
 
     protected String name;
-    
-//    @ElementCollection(fetch = FetchType.EAGER)
-//    @Cascade(CascadeType.DELETE)
+ 
     @ElementCollection
 	private List<Authority> roles;
+    
+    private String pictureUrl;
     
     public User() {}
 
@@ -83,5 +83,13 @@ public abstract class User implements UserDetails {
 	@Override
 	public boolean isEnabled() {
 		return true;
+	}
+
+	public String getPictureUrl() {
+		return pictureUrl;
+	}
+
+	public void setPictureUrl(String imageUrl) {
+		this.pictureUrl = imageUrl;
 	}
 }

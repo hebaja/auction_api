@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.hebaja.auction.model.Auctioneer;
 import com.hebaja.auction.model.Bid;
 import com.hebaja.auction.model.Lot;
 
@@ -38,7 +39,22 @@ public class LotDto {
     	existActiveGroup = lot.getAuction().getAuctioneer().getGroupPlayers().stream().anyMatch(group -> group.isActive());
     }
     
-    public static LotDto convert(Lot lot) {
+    public LotDto(Lot lot, Auctioneer auctioneer) {
+    	this.id = lot.getId();
+    	this.setTitle(lot.getTitle());
+    	this.setDescription(lot.getDescription());
+    	this.startingBid = lot.getStartingBid();
+    	this.active = lot.isActive();
+    	Collections.sort(lot.getBids(), (bid, otherBid) -> bid.getValue().compareTo(otherBid.getValue()));
+    	this.setBidsDto(lot.getBids().stream().map(BidDto::new).collect(Collectors.toList()));
+		this.correct = lot.isCorrect();
+    	if(lot.getPricePaid() != null) {
+    		this.pricePaid = lot.getPricePaid();
+    	}
+    	existActiveGroup = auctioneer.getGroupPlayers().stream().anyMatch(group -> group.isActive());
+	}
+
+	public static LotDto convert(Lot lot) {
     	return new LotDto(lot);
     }
 

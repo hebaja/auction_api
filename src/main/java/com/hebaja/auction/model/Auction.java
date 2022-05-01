@@ -1,8 +1,11 @@
 package com.hebaja.auction.model;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -18,8 +21,6 @@ public class Auction implements Comparable<Auction> {
     private long id;
 	
 	private String title;
-	private boolean finished = false;
-	private boolean favorite;
 	
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	private List<Lot> lots;
@@ -27,10 +28,10 @@ public class Auction implements Comparable<Auction> {
 	@ManyToOne
 	private Auctioneer auctioneer;
 	
-	@ManyToOne
-	private Auctioneer favoritedAuctioneer;
+	@Column(name = "public")
+	private boolean publicAuction;
 	
-	private Long favoritedAuctionId;
+	private LocalDateTime creationDate = LocalDateTime.now();
 	
 	public Auction() {}
 	
@@ -66,41 +67,21 @@ public class Auction implements Comparable<Auction> {
 		return id;
 	}
 
-	public boolean isFinished() {
-		return finished;
-	}
-
-	public void setFinished(boolean finished) {
-		this.finished = finished;
-	}
-
 	@Override
 	public int compareTo(Auction otherAuction) {
 		return Long.compare(this.getId(), otherAuction.getId());
 	}
 
-	public boolean isFavorite() {
-		return favorite;
+	public boolean isPublicAuction() {
+		return publicAuction;
 	}
 
-	public void setFavorite(boolean favorite) {
-		this.favorite = favorite;
+	public void setPublicAuction(boolean publicAuction) {
+		this.publicAuction = publicAuction;
 	}
 
-	public Auctioneer getOriginalAuctioneer() {
-		return favoritedAuctioneer;
+	public LocalDateTime getCreationDate() {
+		return creationDate;
 	}
 
-	public void setOriginalAuctioneer(Auctioneer originalAuctioneer) {
-		this.favoritedAuctioneer = originalAuctioneer;
-	}
-
-	public Long getFavoritedAuctionId() {
-		return favoritedAuctionId;
-	}
-
-	public void setFavoritedAuctionId(Long favoritedAuctionId) {
-		this.favoritedAuctionId = favoritedAuctionId;
-	}
-	
 }

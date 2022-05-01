@@ -45,7 +45,7 @@ public class FirebaseAuthRest {
 		String email = decodedToken.getEmail();
 		String[] emailSplit = email.split("@");
 		String name = emailSplit[0];
-				
+						
 		Auctioneer auctioneer = service.findByEmail(decodedToken.getEmail());
 		
 		if(auctioneer != null) {
@@ -58,6 +58,9 @@ public class FirebaseAuthRest {
 			Auctioneer newAuctioneer = new Auctioneer(decodedToken.getName(), decodedToken.getEmail());
 			newAuctioneer.setAuctions(new ArrayList<Auction>());
 			newAuctioneer.setGroupPlayers(new ArrayList<GroupPlayer>());
+			if(decodedToken.getPicture() != null) {
+				newAuctioneer.setPictureUrl(decodedToken.getPicture());
+			}
 			try {
 				return ResponseEntity.ok(new AuctioneerDto(service.save(newAuctioneer)));
 			} catch (Exception e) {

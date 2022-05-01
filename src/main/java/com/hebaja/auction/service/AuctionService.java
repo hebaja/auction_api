@@ -3,6 +3,8 @@ package com.hebaja.auction.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.hebaja.auction.model.Auction;
@@ -22,12 +24,20 @@ public class AuctionService {
 		return repository.findById(id).orElse(null);
 	}
 
-	public List<Auction> findAll() {
-		return repository.findAll();
+	public Page<Auction> findAll(Pageable pagination) {
+		return repository.findAll(pagination);
+	}
+	
+	public Page<Auction> findAllPublic(Pageable pagination) {
+		return repository.findAllPublic(pagination);
 	}
 	
 	public void delete(Auction auction) {
 		repository.delete(auction);
+	}
+	
+	public Page<Auction> findByTitleLike(String like, Pageable pagination) {
+		return repository.findByTitleLike(like, pagination);
 	}
 
 }

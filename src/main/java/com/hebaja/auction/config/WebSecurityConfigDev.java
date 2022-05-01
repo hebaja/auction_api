@@ -34,7 +34,7 @@ public class WebSecurityConfigDev extends WebSecurityConfigurerAdapter {
 					"/api/reset-password",
 					"/api/test/**",
 					"/api/test",
-					"/api/auction/all")
+					"/api/auction/list")
 				.permitAll()
 			.antMatchers(
 					HttpMethod.POST,

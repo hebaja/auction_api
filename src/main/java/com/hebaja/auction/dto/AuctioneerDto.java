@@ -7,11 +7,13 @@ public class AuctioneerDto {
 	private Long id;
 	private String name;
 	private String email;
+	private String pictureUrl;
 	
 	public AuctioneerDto(Auctioneer auctioneer) {
 		this.id = auctioneer.getId();
 		this.name = auctioneer.getName();
 		this.setEmail(auctioneer.getEmail());
+		this.pictureUrl = auctioneer.getPictureUrl();
 	}
 
 	public Long getId() {
@@ -40,6 +42,14 @@ public class AuctioneerDto {
 
 	public void setEmail(String email) {
 		this.email = email;
+	}
+
+	public String getPictureUrl() {
+		return pictureUrl;
+	}
+
+	public void setPictureUrl(String pictureUrl) {
+		this.pictureUrl = pictureUrl;
 	}
 
 }

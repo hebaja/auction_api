@@ -17,34 +17,35 @@ public class AuctioneerAuctionsDto {
 	
 	private Long id;
 	private String name;
+	private String pitureUrl;
 	private List<AuctionDto> auctionsDto;
 	private List<AuctionDto> favoriteAuctionsDto;
 	private List<GroupPlayerDto> groupPlayerDto;
 	
-	public AuctioneerAuctionsDto(Auctioneer auctioneer) {
+	public AuctioneerAuctionsDto(Auctioneer auctioneer, List<Auction> auctions, List<Auction> favoriteAuctions) {
 		this.setId(auctioneer.getId());
 		this.setName(auctioneer.getName());
-		
+		this.pitureUrl = auctioneer.getPictureUrl();
 		if(auctioneer.getAuctions() != null) {
 			ArrayList<AuctionDto> auctionDtoList = new ArrayList<AuctionDto>();
 			ArrayList<AuctionDto> favoriteAuctionDtoList = new ArrayList<AuctionDto>();
-			Collections.sort(auctioneer.getAuctions(), (auction, otherAuction) -> auction.getTitle().compareTo(otherAuction.getTitle()));
-			auctioneer.getAuctions().forEach(auction -> {
-				if(!auction.isFavorite()) {
-					if(auction.isFinished()) {
-						fetchFinishedAuction(auctionDtoList, auction);
-					} else {
-						auctionDtoList.add(new AuctionDto(auction, null));
-					}
+			
+			auctions.forEach(auction -> {
+				if(auctionIsFinished(auctioneer, auction)) {
+					fetchFinishedAuction(auctionDtoList, auction, auctioneer);
 				} else {
-					if(auction.isFinished()) {
-						fetchFinishedAuction(favoriteAuctionDtoList, auction);
-					} else {
-						favoriteAuctionDtoList.add(new AuctionDto(auction, null));
-					}
+					auctionDtoList.add(new AuctionDto(auction, auctioneer));
 				}
-				
 			});
+			
+			favoriteAuctions.forEach(auction -> {
+				if(auctionIsFinished(auctioneer, auction)) {
+					fetchFinishedAuction(favoriteAuctionDtoList, auction, auctioneer);
+				} else {
+					favoriteAuctionDtoList.add(new AuctionDto(auction, auctioneer));
+				}
+			});
+			
 			this.setAuctionsDto(auctionDtoList);
 			this.setFavoriteAuctionsDto(favoriteAuctionDtoList);
 		}
@@ -54,7 +55,11 @@ public class AuctioneerAuctionsDto {
 		}
 	}
 
-	private void fetchFinishedAuction(ArrayList<AuctionDto> auctionDtoList, Auction auction) {
+	private boolean auctionIsFinished(Auctioneer auctioneer, Auction auction) {
+		return auctioneer.getFinishedAuctionsIds().contains(auction.getId());
+	}
+	
+	private void fetchFinishedAuction(ArrayList<AuctionDto> auctionDtoList, Auction auction, Auctioneer auctioneer) {
 		List<GroupPlayer> groupsWithBidsInAuciton = new ArrayList<GroupPlayer>();
 		List<Player> players = new ArrayList<Player>();
 		
@@ -79,7 +84,7 @@ public class AuctioneerAuctionsDto {
 		});
 		
 		Collections.sort(players, (player, otherPlayer) -> Integer.compare(otherPlayer.getScore(), player.getScore()));
-		auctionDtoList.add(new AuctionDto(auction, players));
+		auctionDtoList.add(new AuctionDto(auction, auctioneer, players));
 	}
 
 	public String getName() {
@@ -116,14 +121,6 @@ public class AuctioneerAuctionsDto {
 		this.groupPlayerDto = groupPlayerDto;
 	}
 	
-	public static AuctioneerAuctionsDto convert(Auctioneer auctioneer) {
-		return new AuctioneerAuctionsDto(auctioneer); 
-	}
-	
-	public static List<AuctioneerAuctionsDto> convertToList(List<Auctioneer> auctioneers) {
-		return auctioneers.stream().map(AuctioneerAuctionsDto::new).collect(Collectors.toList());
-	}
-
 	@JsonProperty("favoriteAuctions")
 	public List<AuctionDto> getFavoriteAuctionsDto() {
 		return favoriteAuctionsDto;
@@ -131,5 +128,13 @@ public class AuctioneerAuctionsDto {
 
 	public void setFavoriteAuctionsDto(List<AuctionDto> favoriteAuctionsDto) {
 		this.favoriteAuctionsDto = favoriteAuctionsDto;
+	}
+
+	public String getPitureUrl() {
+		return pitureUrl;
+	}
+
+	public void setPitureUrl(String pitureUrl) {
+		this.pitureUrl = pitureUrl;
 	}
 }

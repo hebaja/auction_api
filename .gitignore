@@ -1,2 +1,3 @@
 /target/
 /deploy.sh
+/src/main/resources/data.sql

@@ -1,5 +1,7 @@
 package com.hebaja.auction.api;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.hebaja.auction.dto.AuctioneerAuctionsDto;
 import com.hebaja.auction.dto.AuctioneerDto;
 import com.hebaja.auction.form.DeleteAuctioneerForm;
+import com.hebaja.auction.model.Auction;
 import com.hebaja.auction.model.Auctioneer;
 import com.hebaja.auction.service.AuctioneerService;
 
@@ -33,12 +36,15 @@ public class AuctioneerRest {
 	public ResponseEntity<AuctioneerAuctionsDto> auctioneerId(@PathVariable("auctioneerId") Long auctioneerId) {
 		if(auctioneerId != null) {
 			Auctioneer auctioneer = service.findById(auctioneerId);
-//			Collections.sort(auctioneer.getAuctions());
-//			auctioneer.getAuctions().forEach(auction -> {
-//				Collections.sort(auction.getLots());
-//			});
+			
+			List<Auction> auctions = auctioneer.getAuctions();
+			List<Auction> favoriteAuctions = service.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
+						
 			auctioneer.sortAuctions();
-			return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
+			List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
+			
+			
+			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctions, sortFavoriteAuctions));
 		}
 		return ResponseEntity.notFound().build();
 	}
@@ -48,7 +54,7 @@ public class AuctioneerRest {
 	public ResponseEntity<AuctioneerAuctionsDto> auctioneerEmail(@PathVariable("email") String email) {
 		if(email != null) {
 			Auctioneer auctioneer = service.findByEmail(email);
-			return ResponseEntity.ok(AuctioneerAuctionsDto.convert(auctioneer));
+			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, null, null));
 		}
 		return ResponseEntity.notFound().build();
 	}

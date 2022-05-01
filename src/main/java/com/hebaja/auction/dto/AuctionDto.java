@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hebaja.auction.model.Auction;
+import com.hebaja.auction.model.Auctioneer;
 import com.hebaja.auction.model.GroupPlayer;
 import com.hebaja.auction.model.Player;
 
@@ -16,16 +17,57 @@ public class AuctionDto {
 	private String title;
 	private boolean finished;
 	private boolean favorite;
+	private boolean publicAuction;
+	private String creationDate;
 	private List<LotDto> lotsDto;
 	private List<PlayerDto> playersDto = new ArrayList<PlayerDto>();
+	
+	public AuctionDto(Auction auction) {
+		this.id = auction.getId();
+		this.auctioneerId = auction.getAuctioneer().getId();
+		this.setTitle(auction.getTitle());
+		this.finished = auction.getAuctioneer().getFinishedAuctionsIds().stream().anyMatch(id -> auction.getId() == id);
+		this.lotsDto = auction.getLots().stream().map(LotDto::new).collect(Collectors.toList());
+		this.publicAuction = auction.isPublicAuction();
+		this.creationDate = auction.getCreationDate().toString();
+	}
 
 	public AuctionDto(Auction auction, List<Player> players) {
 		this.id = auction.getId();
 		this.auctioneerId = auction.getAuctioneer().getId();
 		this.setTitle(auction.getTitle());
-		this.finished = auction.isFinished();
-		this.favorite = auction.isFavorite();
+		this.finished = auction.getAuctioneer().getFinishedAuctionsIds().stream().anyMatch(id -> auction.getId() == id);
+		this.publicAuction = auction.isPublicAuction();
 		this.lotsDto = auction.getLots().stream().map(LotDto::new).collect(Collectors.toList());
+		this.creationDate = auction.getCreationDate().toString();
+		if(players != null) {
+			players.forEach(player -> {
+				PlayerDto playerDto = PlayerDto.convert(player);
+				playersDto.add(playerDto);
+			});
+		}
+	}
+	
+	public AuctionDto(Auction auction, Auctioneer auctioneer) {
+		this.id = auction.getId();
+		this.auctioneerId = auction.getAuctioneer().getId();
+		this.setTitle(auction.getTitle());
+		this.finished = auctioneer.getFinishedAuctionsIds().stream().anyMatch(id -> auction.getId() == id);
+		this.favorite = auctioneer.getFavoriteAuctionsId().stream().anyMatch(id -> auction.getId() == id);
+		this.publicAuction = auction.isPublicAuction();
+		this.lotsDto = auction.getLots().stream().map(LotDto::new).collect(Collectors.toList());
+		this.creationDate = auction.getCreationDate().toString();
+	}
+	
+	public AuctionDto(Auction auction, Auctioneer auctioneer, List<Player> players) {
+		this.id = auction.getId();
+		this.auctioneerId = auctioneer.getId();
+		this.setTitle(auction.getTitle());
+		this.finished = auctioneer.getFinishedAuctionsIds().stream().anyMatch(id -> auction.getId() == id);
+		this.favorite = auctioneer.getFavoriteAuctionsId().stream().anyMatch(id -> auction.getId() == id);
+		this.publicAuction = auction.isPublicAuction();
+		this.lotsDto = auction.getLots().stream().map(LotDto::new).collect(Collectors.toList());
+		this.creationDate = auction.getCreationDate().toString();
 		if(players != null) {
 			players.forEach(player -> {
 				PlayerDto playerDto = PlayerDto.convert(player);
@@ -94,6 +136,22 @@ public class AuctionDto {
 
 	public void setAuctioneerId(Long auctioneerId) {
 		this.auctioneerId = auctioneerId;
+	}
+
+	public boolean isPublicAuction() {
+		return publicAuction;
+	}
+
+	public void setPublicAuction(boolean publicAuction) {
+		this.publicAuction = publicAuction;
+	}
+
+	public String getCreationDate() {
+		return creationDate;
+	}
+
+	public void setCreationDate(String creationDate) {
+		this.creationDate = creationDate;
 	}
 	
 }

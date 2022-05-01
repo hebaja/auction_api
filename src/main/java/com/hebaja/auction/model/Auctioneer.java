@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -37,10 +38,12 @@ public class Auctioneer extends User {
     @Cascade(CascadeType.DELETE)
     private List<Auction> auctions;
     
-//    @OneToMany(mappedBy = "auctioneer", fetch = FetchType.LAZY)
-//    @Cascade(CascadeType.DELETE)
-//    private List<AuctionFavorite> favoriteAuctions;
-//    
+    @ElementCollection
+    private List<Long> finishedAuctionsIds;
+    
+    @ElementCollection
+    private List<Long> favoriteAuctionsId;
+    
     @Column(unique = true)
     private String email;
     
@@ -53,6 +56,15 @@ public class Auctioneer extends User {
 		getAuctions().forEach(auction -> {
 			Collections.sort(auction.getLots());
 		});
+    }
+    
+    @Transient
+    public List<Auction> sortFavoriteAuctions(List<Auction> favoriteAuctions) {
+    	Collections.sort(favoriteAuctions);
+		favoriteAuctions.forEach(auction -> {
+			Collections.sort(auction.getLots());
+		});
+		return favoriteAuctions;
     }
     
     public Auctioneer() {
@@ -176,6 +188,22 @@ public class Auctioneer extends User {
 
 	public void setWorker(Worker worker) {
 		this.worker = worker;
+	}
+
+	public List<Long> getFinishedAuctionsIds() {
+		return finishedAuctionsIds;
+	}
+
+	public void setFinishedAuctionsIds(List<Long> finishedAuctionsIds) {
+		this.finishedAuctionsIds = finishedAuctionsIds;
+	}
+
+	public List<Long> getFavoriteAuctionsId() {
+		return favoriteAuctionsId;
+	}
+
+	public void setFavoriteAuctionsId(List<Long> favoriteAuctionsId) {
+		this.favoriteAuctionsId = favoriteAuctionsId;
 	}
 
 

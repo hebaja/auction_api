@@ -6,6 +6,7 @@ public class RegisterAuctionForm {
 
 	private Long auctioneerId;
 	private String title;
+	private boolean publicAuction;
 	private List<LotForm> lots;
 
 	public Long getAuctioneerId() {
@@ -30,6 +31,14 @@ public class RegisterAuctionForm {
 
 	public void setLots(List<LotForm> lots) {
 		this.lots = lots;
+	}
+
+	public boolean isPublicAuction() {
+		return publicAuction;
+	}
+
+	public void setPublicAuction(boolean publicAuction) {
+		this.publicAuction = publicAuction;
 	}
 
 }

@@ -7,12 +7,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
 
 import com.hebaja.auction.config.FirebaseConfig;
 import com.hebaja.auction.task.ThreadPoolService;
 
 @SpringBootApplication
 @EnableCaching
+@EnableSpringDataWebSupport
 public class AuctionApplication implements EnvironmentAware{
 
 	public static void main(String[] args) {

@@ -1,5 +1,6 @@
 package com.hebaja.auction.api;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -52,8 +53,6 @@ public class PlayerRest {
 	@Autowired
 	private BidService bidService;
 	
-	private Lot activeLot;
-	
 	private Worker worker = new Worker(); 
 	
 	@GetMapping("{id}")
@@ -62,40 +61,48 @@ public class PlayerRest {
 		Player player = playerService.findById(id);
 		
 		if(player != null) {
+			
 			Auctioneer auctioneer = auctioneerService.findById(player.getGroupPlayers().getAuctioneer().getId());
-			Auction activeAuction = auctioneer.getAuctions()
+			Auction activeAuction = fetchActiveAuction(auctioneer);
+			
+			if(activeAuction != null) {
+				Lot activeLot = activeAuction.getLots()
+						.stream()
+							.filter(lot -> lot.isActive())
+							.findFirst().orElse(null);
+				if(activeLot != null) {
+					return ResponseEntity.ok(PlayerDto.convertWithActiveLot(player, activeLot));
+				}
+			}
+			return ResponseEntity.ok(PlayerDto.convert(player));
+		}
+		System.out.println("returning 404");
+		return ResponseEntity.notFound().build();
+	}
+
+	private Auction fetchActiveAuction(Auctioneer auctioneer) {
+		return auctioneer
+				.getAuctions()
+				.stream()
+					.filter(auction -> auction.getLots().stream()
+					.anyMatch(lot -> lot.isActive()))
+					.findFirst().orElse(fetchFavoriteActiveAuction(auctioneer));
+	}
+
+	private Auction fetchFavoriteActiveAuction(Auctioneer auctioneer) {
+		return auctioneerService
+					.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId())
 					.stream()
 						.filter(auction -> auction.getLots().stream()
 						.anyMatch(lot -> lot.isActive()))
 						.findFirst().orElse(null);
-			
-			if(activeAuction != null) {
-				activeLot = activeAuction.getLots()
-						.stream()
-							.filter(lot -> lot.isActive())
-							.findFirst().orElse(null);
-			} else {
-				activeLot = null;
-			}
-			
-			if(this.activeLot != null) {
-				return ResponseEntity.ok(PlayerDto.convertWithActiveLot(player, this.activeLot));
-			} else {
-				return ResponseEntity.ok(PlayerDto.convert(player));
-			}
-		}
-		return ResponseEntity.notFound().build();
 	}
 	
 	@PostMapping("make-bid")
 	@CacheEvict(value = {"auctioneer-auctions", "player"}, allEntries = true)
 	public ResponseEntity<PlayerDto> makeBid(@RequestBody MakeBidForm form) throws InterruptedException, ExecutionException {
-		
 		if(form != null) {
-		
 			Player player = playerService.findById(form.getPlayerId());
-			
-			
 			if(player.getGroupPlayers().isActive()) {
 				Auctioneer auctioneer = auctioneerService.findByUsername(player.getGroupPlayers().getAuctioneer().getName());
 				Lot lot = lotService.findById(form.getLotId());
@@ -121,12 +128,6 @@ public class PlayerRest {
 					default:
 						return ResponseEntity.badRequest().build();
 					}
-//					if(futureResult.get() == BidAnalysisResult.BID_VALID) {
-//						lot.getBids().add(bid);
-//						return ResponseEntity.ok(PlayerDto.convertWithActiveLot(player, lot));
-//					} else {
-//						return ResponseEntity.badRequest().build();
-//					}
 				}
 				
 			} else {

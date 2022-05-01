@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public class StartLotForm {
 
 	private Long lotId;
+	private Long auctioneerId;
 	private BigDecimal startingBid;
 
 	public Long getLotId() {
@@ -21,6 +22,14 @@ public class StartLotForm {
 
 	public void setStartingBid(BigDecimal startingBid) {
 		this.startingBid = startingBid;
+	}
+
+	public Long getAuctioneerId() {
+		return auctioneerId;
+	}
+
+	public void setAuctioneerId(Long auctioneerId) {
+		this.auctioneerId = auctioneerId;
 	}
 	
 }
