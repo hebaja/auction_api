@@ -12,6 +12,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>{
 	@Query("select a from Auction a where a.publicAuction = true")
 	Page<Auction> findAllPublic(Pageable pageable);
 
-	Page<Auction> findByTitleLike(String like, Pageable pagination);
+	Page<Auction> findByTitleLikeIgnoreCase(String like, Pageable pagination);
 
 }

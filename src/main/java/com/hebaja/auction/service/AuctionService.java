@@ -37,7 +37,7 @@ public class AuctionService {
 	}
 	
 	public Page<Auction> findByTitleLike(String like, Pageable pagination) {
-		return repository.findByTitleLike(like, pagination);
+		return repository.findByTitleLikeIgnoreCase(like, pagination);
 	}
 
 }
