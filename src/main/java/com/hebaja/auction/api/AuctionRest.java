@@ -360,8 +360,12 @@ public class AuctionRest {
 				auctionService.delete(auctionToBeRemoved);
 				Long auctioneerId = auctionToBeRemoved.getAuctioneer().getId();
 				Auctioneer auctioneer = auctioneerService.findById(auctioneerId);
-				fetchFavoriteAuctionsAndSort(auctioneer);
-				return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, null, null));
+				
+				List<Auction> favoriteAuctions = auctioneerService.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
+				auctioneer.sortAuctions();
+				List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
+				
+				return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctioneer.getAuctions(), sortFavoriteAuctions));
 			} catch (Exception e) {
 				e.printStackTrace();
 				return ResponseEntity.badRequest().build();
@@ -429,19 +433,14 @@ public class AuctionRest {
 			}
 			auctioneer.getFavoriteAuctionsId().remove(form.getAuctionId());
 			
-			fetchFavoriteAuctionsAndSort(auctioneer);
-
+			List<Auction> favoriteAuctions = auctioneerService.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
+			auctioneer.sortAuctions();
+			List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
+			
 			auctioneerService.save(auctioneer);
-			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, null, null));
+			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctioneer.getAuctions(), sortFavoriteAuctions));
 		}
 		return ResponseEntity.badRequest().build();
-	}
-
-
-	private void fetchFavoriteAuctionsAndSort(Auctioneer auctioneer) {
-		List<Auction> favoriteAuctions = auctioneerService.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
-		auctioneer.getAuctions().addAll(favoriteAuctions);
-		auctioneer.sortAuctions();
 	}
 	
 }
