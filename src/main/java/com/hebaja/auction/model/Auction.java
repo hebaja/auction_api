@@ -37,6 +37,8 @@ public class Auction implements Comparable<Auction> {
 	
 	private boolean favorite;
 	
+	private Long favoritedAuctionId;
+	
 	private LocalDateTime creationDate = LocalDateTime.now();
 	
 	public Auction() {}
@@ -116,6 +118,14 @@ public class Auction implements Comparable<Auction> {
 
 	public void setFavorite(boolean favorite) {
 		this.favorite = favorite;
+	}
+
+	public Long getFavoritedAuctionId() {
+		return favoritedAuctionId;
+	}
+
+	public void setFavoritedAuctionId(Long favoritedAuctionId) {
+		this.favoritedAuctionId = favoritedAuctionId;
 	}
 	
 }

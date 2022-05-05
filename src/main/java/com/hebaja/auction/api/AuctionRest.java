@@ -382,15 +382,18 @@ public class AuctionRest {
 		if(form != null) {
 			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
 			
-			if(auctioneer.getFavoritedAuctionsId().contains(form.getAuctionId())) {
+			if(auctioneer.getAuctions().stream().filter(Auction::isFavorite).anyMatch(auction -> auction.getFavoritedAuctionId().equals(form.getAuctionId()))) {
 				return ResponseEntity.status(HttpStatus.CONFLICT).build();
 			}
-			auctioneer.getFavoritedAuctionsId().add(form.getAuctionId());
+			
 			Auction originalAuction = auctionService.findById(form.getAuctionId());
+			
 			originalAuction.incrementFavoriteCounter();
 			auctionService.save(originalAuction);
 			
 			Auction favoritedAuction = fetchFavoritedAuction(originalAuction, auctioneer);
+			
+			auctionService.save(favoritedAuction);
 			
 			auctioneer.getAuctions().add(favoritedAuction);
 			
@@ -405,7 +408,9 @@ public class AuctionRest {
 		favoritedAuction.setAuctioneer(auctioneer);
 		favoritedAuction.setFinished(false);
 		favoritedAuction.setPublicAuction(false);
+		favoritedAuction.setFavorite(true);
 		favoritedAuction.setTitle(originalAuction.getTitle());
+		favoritedAuction.setFavoritedAuctionId(originalAuction.getId());
 		
 		ArrayList<Lot> lots = new ArrayList<Lot>();
 		
@@ -431,13 +436,25 @@ public class AuctionRest {
 	public ResponseEntity<AuctioneerAuctionsDto> removeFavorite(@RequestBody OpenAuctionForm form) {
 		if(form != null) {
 			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
-			if(!auctioneer.getFavoritedAuctionsId().contains(form.getAuctionId())) {
+									
+			auctioneer.getAuctions().forEach(auction -> {
+				if(auction.isFavorite()) {
+					System.out.println("favorite auction id -> " + auction.getId());
+					System.out.println("favorited auction id -> " + auction.getFavoritedAuctionId());
+				}
+			});
+			
+			if(!auctioneer.getAuctions().stream().filter(Auction::isFavorite).anyMatch(auction -> auction.getId() == form.getAuctionId())) {
 				return ResponseEntity.status(HttpStatus.CONFLICT).build();
 			}
-			Auction favoritedAuction = auctionService.findById(form.getAuctioneerId());
-			favoritedAuction.decrementFavoriteCounter();
-			auctionService.save(favoritedAuction);
+			Auction favoritedAuction = auctionService.findById(form.getAuctionId());
+			
+			
+			Auction originalAuction = auctionService.findById(favoritedAuction.getFavoritedAuctionId());
+			originalAuction.decrementFavoriteCounter();
+			auctionService.save(originalAuction);
 			auctioneer.getAuctions().remove(favoritedAuction);
+			auctionService.delete(favoritedAuction);
 			auctioneer.sortAuctions();
 			auctioneerService.save(auctioneer);
 			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer));

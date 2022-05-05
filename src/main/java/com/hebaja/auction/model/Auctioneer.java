@@ -38,9 +38,6 @@ public class Auctioneer extends User {
     @Cascade(CascadeType.DELETE)
     private List<Auction> auctions;
     
-    @ElementCollection
-    private List<Long> favoritedAuctionsId;
-    
     @Column(unique = true)
     private String email;
     
@@ -178,7 +175,4 @@ public class Auctioneer extends User {
 		this.worker = worker;
 	}
 
-	public List<Long> getFavoritedAuctionsId() {
-		return favoritedAuctionsId;
-	}
 }
