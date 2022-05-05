@@ -17,6 +17,7 @@ public class AuctionDto {
 	private String title;
 	private boolean finished;
 	private boolean favorite;
+	private boolean openLot;
 	private boolean publicAuction;
 	private String creationDate;
 	private List<LotDto> lotsDto;
@@ -26,7 +27,8 @@ public class AuctionDto {
 		this.id = auction.getId();
 		this.auctioneerId = auction.getAuctioneer().getId();
 		this.setTitle(auction.getTitle());
-		this.finished = auction.getAuctioneer().getFinishedAuctionsIds().stream().anyMatch(id -> auction.getId() == id);
+		this.finished = auction.isFinished();
+		this.openLot = auction.getLots().stream().anyMatch(lot -> lot.isActive());
 		this.lotsDto = auction.getLots().stream().map(LotDto::new).collect(Collectors.toList());
 		this.publicAuction = auction.isPublicAuction();
 		this.creationDate = auction.getCreationDate().toString();
@@ -36,7 +38,8 @@ public class AuctionDto {
 		this.id = auction.getId();
 		this.auctioneerId = auction.getAuctioneer().getId();
 		this.setTitle(auction.getTitle());
-		this.finished = auction.getAuctioneer().getFinishedAuctionsIds().stream().anyMatch(id -> auction.getId() == id);
+		this.finished = auction.isFinished();
+		this.openLot = auction.getLots().stream().anyMatch(lot -> lot.isActive());
 		this.publicAuction = auction.isPublicAuction();
 		this.lotsDto = auction.getLots().stream().map(LotDto::new).collect(Collectors.toList());
 		this.creationDate = auction.getCreationDate().toString();
@@ -52,8 +55,9 @@ public class AuctionDto {
 		this.id = auction.getId();
 		this.auctioneerId = auction.getAuctioneer().getId();
 		this.setTitle(auction.getTitle());
-		this.finished = auctioneer.getFinishedAuctionsIds().stream().anyMatch(id -> auction.getId() == id);
-		this.favorite = auctioneer.getFavoriteAuctionsId().stream().anyMatch(id -> auction.getId() == id);
+		this.finished = auction.isFinished();
+		this.openLot = auction.getLots().stream().anyMatch(lot -> lot.isActive());
+		this.favorite = auction.isFavorite();
 		this.publicAuction = auction.isPublicAuction();
 		this.lotsDto = auction.getLots().stream().map(LotDto::new).collect(Collectors.toList());
 		this.creationDate = auction.getCreationDate().toString();
@@ -63,8 +67,9 @@ public class AuctionDto {
 		this.id = auction.getId();
 		this.auctioneerId = auctioneer.getId();
 		this.setTitle(auction.getTitle());
-		this.finished = auctioneer.getFinishedAuctionsIds().stream().anyMatch(id -> auction.getId() == id);
-		this.favorite = auctioneer.getFavoriteAuctionsId().stream().anyMatch(id -> auction.getId() == id);
+		this.finished = auction.isFinished();
+		this.openLot = auction.getLots().stream().anyMatch(lot -> lot.isActive());
+		this.favorite = auction.isFavorite();
 		this.publicAuction = auction.isPublicAuction();
 		this.lotsDto = auction.getLots().stream().map(LotDto::new).collect(Collectors.toList());
 		this.creationDate = auction.getCreationDate().toString();
@@ -152,6 +157,14 @@ public class AuctionDto {
 
 	public void setCreationDate(String creationDate) {
 		this.creationDate = creationDate;
+	}
+
+	public boolean isOpenLot() {
+		return openLot;
+	}
+
+	public void setOpenLot(boolean openLot) {
+		this.openLot = openLot;
 	}
 	
 }

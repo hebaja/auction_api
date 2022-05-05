@@ -1,7 +1,5 @@
 package com.hebaja.auction.api;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +15,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.hebaja.auction.dto.AuctioneerAuctionsDto;
 import com.hebaja.auction.dto.AuctioneerDto;
 import com.hebaja.auction.form.DeleteAuctioneerForm;
-import com.hebaja.auction.model.Auction;
 import com.hebaja.auction.model.Auctioneer;
 import com.hebaja.auction.service.AuctioneerService;
 
@@ -36,15 +33,8 @@ public class AuctioneerRest {
 	public ResponseEntity<AuctioneerAuctionsDto> auctioneerId(@PathVariable("auctioneerId") Long auctioneerId) {
 		if(auctioneerId != null) {
 			Auctioneer auctioneer = service.findById(auctioneerId);
-			
-			List<Auction> auctions = auctioneer.getAuctions();
-			List<Auction> favoriteAuctions = service.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
-						
 			auctioneer.sortAuctions();
-			List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
-			
-			
-			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctions, sortFavoriteAuctions));
+			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer));
 		}
 		return ResponseEntity.notFound().build();
 	}
@@ -54,7 +44,7 @@ public class AuctioneerRest {
 	public ResponseEntity<AuctioneerAuctionsDto> auctioneerEmail(@PathVariable("email") String email) {
 		if(email != null) {
 			Auctioneer auctioneer = service.findByEmail(email);
-			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, null, null));
+			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer));
 		}
 		return ResponseEntity.notFound().build();
 	}
@@ -72,13 +62,11 @@ public class AuctioneerRest {
 			try {
 				service.delete(auctioneer);
 				FirebaseAuth.getInstance().deleteUser(form.getUid());
-				return ResponseEntity.ok("User successfully");
+				return ResponseEntity.ok("User successfully deleted");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		} 
 		return ResponseEntity.notFound().build();
 	}
-	
-	
 }

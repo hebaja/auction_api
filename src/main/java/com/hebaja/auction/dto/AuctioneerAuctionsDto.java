@@ -22,7 +22,7 @@ public class AuctioneerAuctionsDto {
 	private List<AuctionDto> favoriteAuctionsDto;
 	private List<GroupPlayerDto> groupPlayerDto;
 	
-	public AuctioneerAuctionsDto(Auctioneer auctioneer, List<Auction> auctions, List<Auction> favoriteAuctions) {
+	public AuctioneerAuctionsDto(Auctioneer auctioneer) {
 		this.setId(auctioneer.getId());
 		this.setName(auctioneer.getName());
 		this.pitureUrl = auctioneer.getPictureUrl();
@@ -30,22 +30,21 @@ public class AuctioneerAuctionsDto {
 			ArrayList<AuctionDto> auctionDtoList = new ArrayList<AuctionDto>();
 			ArrayList<AuctionDto> favoriteAuctionDtoList = new ArrayList<AuctionDto>();
 			
-			auctions.forEach(auction -> {
-				if(auctionIsFinished(auctioneer, auction)) {
-					fetchFinishedAuction(auctionDtoList, auction, auctioneer);
+			auctioneer.getAuctions().forEach(auction -> {
+				if(!auction.isFavorite()) {
+					if(!auction.isFinished()) {
+						auctionDtoList.add(new AuctionDto(auction));
+					} else {
+						fetchFinishedAuction(auctionDtoList, auction, auctioneer);
+					}
 				} else {
-					auctionDtoList.add(new AuctionDto(auction, auctioneer));
-				}
+					if(!auction.isFinished()) {
+						favoriteAuctionDtoList.add(new AuctionDto(auction));
+					} else {
+						fetchFinishedAuction(favoriteAuctionDtoList, auction, auctioneer);
+					}
+				} 
 			});
-			
-			favoriteAuctions.forEach(auction -> {
-				if(auctionIsFinished(auctioneer, auction)) {
-					fetchFinishedAuction(favoriteAuctionDtoList, auction, auctioneer);
-				} else {
-					favoriteAuctionDtoList.add(new AuctionDto(auction, auctioneer));
-				}
-			});
-			
 			this.setAuctionsDto(auctionDtoList);
 			this.setFavoriteAuctionsDto(favoriteAuctionDtoList);
 		}
@@ -55,10 +54,6 @@ public class AuctioneerAuctionsDto {
 		}
 	}
 
-	private boolean auctionIsFinished(Auctioneer auctioneer, Auction auction) {
-		return auctioneer.getFinishedAuctionsIds().contains(auction.getId());
-	}
-	
 	private void fetchFinishedAuction(ArrayList<AuctionDto> auctionDtoList, Auction auction, Auctioneer auctioneer) {
 		List<GroupPlayer> groupsWithBidsInAuciton = new ArrayList<GroupPlayer>();
 		List<Player> players = new ArrayList<Player>();

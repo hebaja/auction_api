@@ -37,6 +37,7 @@ import com.hebaja.auction.form.RegisterAuctionForm;
 import com.hebaja.auction.form.StartLotForm;
 import com.hebaja.auction.model.Auction;
 import com.hebaja.auction.model.Auctioneer;
+import com.hebaja.auction.model.Bid;
 import com.hebaja.auction.model.GroupPlayer;
 import com.hebaja.auction.model.Lot;
 import com.hebaja.auction.model.Player;
@@ -73,44 +74,19 @@ public class AuctionRest {
 		if(form != null) {
 			Auction auction = auctionService.findById(form.getAuctionId());
 			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
-			
-			if(!auctionIsFavorite(form.getAuctionId(), auctioneer)) {
-				if(auctionIsFinished(form.getAuctionId(), auctioneer)) {
-					List<Player> players = fetchActivePlayers(auctioneer);
-					auction.setLots(auction.getLots().stream().distinct().collect(Collectors.toList()));
-					System.out.println("auction is not favorite and finished -> " + form.getAuctionId());
-					List<Player> sortPlayers = players.stream().sorted(Comparator.comparing(Player::getScore).reversed()).collect(Collectors.toList());
-					return ResponseEntity.ok(new AuctionDto(auction, sortPlayers));
-				} else {
-					auction.setLots(auction.getLots().stream().distinct().collect(Collectors.toList()));
-					System.out.println("auction is not favorite and not finished -> " + form.getAuctionId());
-					return ResponseEntity.ok(new AuctionDto(auction));
-				}
+			if(auction.isFinished()) {
+				List<Player> players = fetchActivePlayers(auctioneer);
+				auction.setLots(auction.getLots().stream().distinct().collect(Collectors.toList()));
+				List<Player> sortPlayers = players.stream().sorted(Comparator.comparing(Player::getScore).reversed()).collect(Collectors.toList());
+				return ResponseEntity.ok(new AuctionDto(auction, sortPlayers));
 			} else {
-				if(auctionIsFinished(form.getAuctionId(), auctioneer)) {
-					List<Player> players = fetchActivePlayers(auctioneer);
-					auction.setLots(auction.getLots().stream().distinct().collect(Collectors.toList()));
-					System.out.println("auction is favorite and finished -> " + form.getAuctionId());
-					List<Player> sortPlayers = players.stream().sorted(Comparator.comparing(Player::getScore).reversed()).collect(Collectors.toList());
-					return ResponseEntity.ok(new AuctionDto(auction, auctioneer, sortPlayers));
-				} else {
-					auction.setLots(auction.getLots().stream().distinct().collect(Collectors.toList()));
-					System.out.println("auction is favorite and not finished -> " + form.getAuctionId());
-					return ResponseEntity.ok(new AuctionDto(auction, auctioneer));
-				}
+				auction.setLots(auction.getLots().stream().distinct().collect(Collectors.toList()));
+				return ResponseEntity.ok(new AuctionDto(auction));
 			}
 		}
 		return ResponseEntity.badRequest().build();
 	}
 	
-
-	private boolean auctionIsFinished(Long auctionId, Auctioneer auctioneer) {
-		return auctioneer.getFinishedAuctionsIds().contains(auctionId);
-	}
-
-	private boolean auctionIsFavorite(Long auctionId, Auctioneer auctioneer) {
-		return auctioneer.getFavoriteAuctionsId().contains(auctionId);
-	}
 
 	private List<Player> fetchActivePlayers(Auctioneer auctioneer) {
 		List<GroupPlayer> activeGroups = auctioneer.getGroupPlayers().stream().filter(group -> group.isActive()).collect(Collectors.toList());
@@ -215,19 +191,14 @@ public class AuctionRest {
 		if(form != null) {
 			Auction auction = auctionService.findById(form.getAuctionId());
 			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
-			auctioneer.getFinishedAuctionsIds().add(auction.getId());
+			
 			try {
-				Auction finishedAuction = auctionService.save(auction);
-				
+				auction.setFinished(true);
 				List<Player> players = fetchActivePlayers(auctioneer);
-				
-				finishedAuction.setLots(finishedAuction.getLots().stream().distinct().collect(Collectors.toList()));
-				
-				finishedAuction.getLots().stream().forEach(lot -> System.out.println(lot.getDescription()));
-				
+				auction.setLots(auction.getLots().stream().distinct().collect(Collectors.toList()));
 				List<Player> sortPlayers = players.stream().sorted(Comparator.comparing(Player::getScore).reversed()).collect(Collectors.toList());
-				
-				return ResponseEntity.ok(new AuctionDto(finishedAuction, auctioneer, sortPlayers));
+				Auction savedAuction = auctionService.save(auction);
+				return ResponseEntity.ok(new AuctionDto(savedAuction, auctioneer, sortPlayers));
 			} catch (Exception e) {
 				e.printStackTrace();
 				return ResponseEntity.notFound().build();
@@ -322,7 +293,7 @@ public class AuctionRest {
 				auction.getLots().forEach(lot -> {
 					if(lot.getBids().size() > 0) {
 						Player player = lot.getBids().get(lot.getBids().size() -1).getPlayer();
-						player.setAcquiredLots(new ArrayList<Lot>());
+						player.getAcquiredLots().remove(lot);
 						playerService.save(player);
 					}
 					lot.setPricePaid(null);
@@ -336,15 +307,14 @@ public class AuctionRest {
 				e.printStackTrace();
 				return ResponseEntity.internalServerError().build();
 			}
-			Auctioneer auctioneer = auction.getAuctioneer();
-			auctioneer.getFinishedAuctionsIds().remove(auction.getId());
+			auction.setFinished(false);
 			
 			Auction auctionReset = auctionService.save(auction);
 			
 			List<Lot> lotsWithoutDuplicates = auctionReset.getLots().stream().distinct().collect(Collectors.toList());
 			auctionReset.setLots(lotsWithoutDuplicates);
 			
-			return ResponseEntity.ok(AuctionDto.convert(auctionReset, null));
+			return ResponseEntity.ok(new AuctionDto(auctionReset));
 			
 		} else {
 			return ResponseEntity.notFound().build();
@@ -361,11 +331,9 @@ public class AuctionRest {
 				Long auctioneerId = auctionToBeRemoved.getAuctioneer().getId();
 				Auctioneer auctioneer = auctioneerService.findById(auctioneerId);
 				
-				List<Auction> favoriteAuctions = auctioneerService.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
 				auctioneer.sortAuctions();
-				List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
 				
-				return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctioneer.getAuctions(), sortFavoriteAuctions));
+				return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer));
 			} catch (Exception e) {
 				e.printStackTrace();
 				return ResponseEntity.badRequest().build();
@@ -413,14 +381,49 @@ public class AuctionRest {
 	public ResponseEntity<?> addFavorite(@RequestBody OpenAuctionForm form) {
 		if(form != null) {
 			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
-			if(auctioneer.getFavoriteAuctionsId().contains(form.getAuctionId())) {
+			
+			if(auctioneer.getFavoritedAuctionsId().contains(form.getAuctionId())) {
 				return ResponseEntity.status(HttpStatus.CONFLICT).build();
 			}
-			auctioneer.getFavoriteAuctionsId().add(form.getAuctionId());
+			auctioneer.getFavoritedAuctionsId().add(form.getAuctionId());
+			Auction originalAuction = auctionService.findById(form.getAuctionId());
+			originalAuction.incrementFavoriteCounter();
+			auctionService.save(originalAuction);
+			
+			Auction favoritedAuction = fetchFavoritedAuction(originalAuction, auctioneer);
+			
+			auctioneer.getAuctions().add(favoritedAuction);
+			
 			auctioneerService.save(auctioneer);
 			return ResponseEntity.ok().build();
 		}
 		return ResponseEntity.badRequest().build();
+	}
+
+	private Auction fetchFavoritedAuction(Auction originalAuction, Auctioneer auctioneer) {
+		Auction favoritedAuction = new Auction();
+		favoritedAuction.setAuctioneer(auctioneer);
+		favoritedAuction.setFinished(false);
+		favoritedAuction.setPublicAuction(false);
+		favoritedAuction.setTitle(originalAuction.getTitle());
+		
+		ArrayList<Lot> lots = new ArrayList<Lot>();
+		
+		originalAuction.getLots().forEach(lot -> {
+			Lot newLot = new Lot();
+			newLot.setActive(false);
+			newLot.setAuction(favoritedAuction);
+			newLot.setBids(new ArrayList<Bid>());
+			newLot.setCorrect(lot.isCorrect());
+			newLot.setDescription(lot.getDescription());
+			newLot.setPricePaid(null);
+			newLot.setStartingBid(null);
+			newLot.setTitle(lot.getTitle());
+			lots.add(newLot);
+		});
+		
+		favoritedAuction.setLots(lots);
+		return favoritedAuction;
 	}
 	
 	@PostMapping("remove-favorite")
@@ -428,17 +431,16 @@ public class AuctionRest {
 	public ResponseEntity<AuctioneerAuctionsDto> removeFavorite(@RequestBody OpenAuctionForm form) {
 		if(form != null) {
 			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
-			if(!auctioneer.getFavoriteAuctionsId().contains(form.getAuctionId())) {
+			if(!auctioneer.getFavoritedAuctionsId().contains(form.getAuctionId())) {
 				return ResponseEntity.status(HttpStatus.CONFLICT).build();
 			}
-			auctioneer.getFavoriteAuctionsId().remove(form.getAuctionId());
-			
-			List<Auction> favoriteAuctions = auctioneerService.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
+			Auction favoritedAuction = auctionService.findById(form.getAuctioneerId());
+			favoritedAuction.decrementFavoriteCounter();
+			auctionService.save(favoritedAuction);
+			auctioneer.getAuctions().remove(favoritedAuction);
 			auctioneer.sortAuctions();
-			List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
-			
 			auctioneerService.save(auctioneer);
-			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctioneer.getAuctions(), sortFavoriteAuctions));
+			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer));
 		}
 		return ResponseEntity.badRequest().build();
 	}

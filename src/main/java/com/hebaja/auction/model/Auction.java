@@ -31,6 +31,12 @@ public class Auction implements Comparable<Auction> {
 	@Column(name = "public")
 	private boolean publicAuction;
 	
+	private boolean finished;
+	
+	private Long favoritedCounter = 0L;
+	
+	private boolean favorite;
+	
 	private LocalDateTime creationDate = LocalDateTime.now();
 	
 	public Auction() {}
@@ -84,4 +90,32 @@ public class Auction implements Comparable<Auction> {
 		return creationDate;
 	}
 
+	public boolean isFinished() {
+		return finished;
+	}
+
+	public void setFinished(boolean finished) {
+		this.finished = finished;
+	}
+
+	public Long getFavoritedCounter() {
+		return favoritedCounter;
+	}
+
+	public void incrementFavoriteCounter() {
+		favoritedCounter++;
+	}
+	
+	public void decrementFavoriteCounter() {
+		favoritedCounter--;
+	}
+
+	public boolean isFavorite() {
+		return favorite;
+	}
+
+	public void setFavorite(boolean favorite) {
+		this.favorite = favorite;
+	}
+	
 }

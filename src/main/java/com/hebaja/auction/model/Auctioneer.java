@@ -39,10 +39,7 @@ public class Auctioneer extends User {
     private List<Auction> auctions;
     
     @ElementCollection
-    private List<Long> finishedAuctionsIds;
-    
-    @ElementCollection
-    private List<Long> favoriteAuctionsId;
+    private List<Long> favoritedAuctionsId;
     
     @Column(unique = true)
     private String email;
@@ -56,15 +53,6 @@ public class Auctioneer extends User {
 		getAuctions().forEach(auction -> {
 			Collections.sort(auction.getLots());
 		});
-    }
-    
-    @Transient
-    public List<Auction> sortFavoriteAuctions(List<Auction> favoriteAuctions) {
-    	Collections.sort(favoriteAuctions);
-		favoriteAuctions.forEach(auction -> {
-			Collections.sort(auction.getLots());
-		});
-		return favoriteAuctions;
     }
     
     public Auctioneer() {
@@ -190,21 +178,7 @@ public class Auctioneer extends User {
 		this.worker = worker;
 	}
 
-	public List<Long> getFinishedAuctionsIds() {
-		return finishedAuctionsIds;
+	public List<Long> getFavoritedAuctionsId() {
+		return favoritedAuctionsId;
 	}
-
-	public void setFinishedAuctionsIds(List<Long> finishedAuctionsIds) {
-		this.finishedAuctionsIds = finishedAuctionsIds;
-	}
-
-	public List<Long> getFavoriteAuctionsId() {
-		return favoriteAuctionsId;
-	}
-
-	public void setFavoriteAuctionsId(List<Long> favoriteAuctionsId) {
-		this.favoriteAuctionsId = favoriteAuctionsId;
-	}
-
-
 }

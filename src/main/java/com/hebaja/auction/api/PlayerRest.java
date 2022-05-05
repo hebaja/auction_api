@@ -1,6 +1,5 @@
 package com.hebaja.auction.api;
 
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -84,18 +83,20 @@ public class PlayerRest {
 		return auctioneer
 				.getAuctions()
 				.stream()
+					.filter(auction -> !auction.isFavorite())
 					.filter(auction -> auction.getLots().stream()
 					.anyMatch(lot -> lot.isActive()))
 					.findFirst().orElse(fetchFavoriteActiveAuction(auctioneer));
 	}
 
 	private Auction fetchFavoriteActiveAuction(Auctioneer auctioneer) {
-		return auctioneerService
-					.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId())
-					.stream()
-						.filter(auction -> auction.getLots().stream()
-						.anyMatch(lot -> lot.isActive()))
-						.findFirst().orElse(null);
+		return auctioneer
+				.getAuctions()
+				.stream()
+					.filter(auction -> auction.isFavorite())
+					.filter(auction -> auction.getLots().stream()
+					.anyMatch(lot -> lot.isActive()))
+					.findFirst().orElse(null);
 	}
 	
 	@PostMapping("make-bid")
@@ -133,9 +134,6 @@ public class PlayerRest {
 			} else {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 			}
-			
-			
-			
 		}
 		return ResponseEntity.notFound().build();
 	}

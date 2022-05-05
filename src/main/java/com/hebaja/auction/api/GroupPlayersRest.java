@@ -51,14 +51,8 @@ public class GroupPlayersRest {
 			GroupPlayer groupPlayer = groupService.findById(form.getGroupPlayerId());
 			changeState(groupPlayer, !form.isGroupActive());
 			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
-			
-			List<Auction> auctions = auctioneer.getAuctions();
-			List<Auction> favoriteAuctions = auctioneerService.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
-			
 			auctioneer.sortAuctions();
-			List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
-			
-			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctions, sortFavoriteAuctions));
+			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer));
 		}
 		return ResponseEntity.notFound().build();
 	}
@@ -81,14 +75,8 @@ public class GroupPlayersRest {
 			groupPlayer.setPlayers(players);
 			try {
 				groupService.save(groupPlayer);
-				
-				List<Auction> auctions = auctioneer.getAuctions();
-				List<Auction> favoriteAuctions = auctioneerService.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
-				
 				auctioneer.sortAuctions();
-				List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
-				
-				return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctions, sortFavoriteAuctions));
+				return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -126,17 +114,10 @@ public class GroupPlayersRest {
 					groupPlayer.add(player);
 				}
 			});
-			
 			groupPlayer.setName(form.getGroupPlayerName());
 			groupService.save(groupPlayer);
-			
-			List<Auction> auctions = auctioneer.getAuctions();
-			List<Auction> favoriteAuctions = auctioneerService.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
-			
 			auctioneer.sortAuctions();
-			List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
-			
-			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctions, sortFavoriteAuctions));
+			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer));
 		}
 		return ResponseEntity.notFound().build();
 	}
@@ -148,14 +129,8 @@ public class GroupPlayersRest {
 			GroupPlayer groupPlayer = groupService.findById(form.getGroupPlayerId());
 			groupService.delete(groupPlayer);
 			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
-			
-			List<Auction> auctions = auctioneer.getAuctions();
-			List<Auction> favoriteAuctions = auctioneerService.findFavoriteAuctions(auctioneer.getFavoriteAuctionsId());
-			
 			auctioneer.sortAuctions();
-			List<Auction> sortFavoriteAuctions = auctioneer.sortFavoriteAuctions(favoriteAuctions);
-			
-			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer, auctions, sortFavoriteAuctions));
+			return ResponseEntity.ok(new AuctioneerAuctionsDto(auctioneer));
 		}
 		return ResponseEntity.badRequest().build();
 	}
