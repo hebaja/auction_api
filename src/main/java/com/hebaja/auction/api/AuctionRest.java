@@ -74,6 +74,7 @@ public class AuctionRest {
 		if(form != null) {
 			Auction auction = auctionService.findById(form.getAuctionId());
 			Auctioneer auctioneer = auctioneerService.findById(form.getAuctioneerId());
+			
 			if(auction.isFinished()) {
 				List<Player> players = fetchActivePlayers(auctioneer);
 				auction.setLots(auction.getLots().stream().distinct().collect(Collectors.toList()));
@@ -264,7 +265,6 @@ public class AuctionRest {
 	@CacheEvict(value = {"auctioneer-auctions", "player"}, allEntries = true)
 	public ResponseEntity<AuctionDto> resetLot(@PathVariable("lotId") Long lotId) {
 		if(lotId != null) {
-			System.out.println("lot id " + lotId);
 			Lot lot = lotService.findById(lotId);
 									
 			if(lot != null) {
