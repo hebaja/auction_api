@@ -13,13 +13,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
-import com.hebaja.auction.dto.AuctioneerAuctionsDto;
 import com.hebaja.auction.dto.AuctioneerDto;
 import com.hebaja.auction.model.Auction;
 import com.hebaja.auction.model.Auctioneer;
@@ -41,11 +39,6 @@ public class FirebaseAuthRest {
 	public ResponseEntity<AuctioneerDto> auth(@RequestBody String idToken) throws FirebaseAuthException {
 		
 		FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
-		
-		String email = decodedToken.getEmail();
-		String[] emailSplit = email.split("@");
-		String name = emailSplit[0];
-						
 		Auctioneer auctioneer = service.findByEmail(decodedToken.getEmail());
 		
 		if(auctioneer != null) {
@@ -71,6 +64,7 @@ public class FirebaseAuthRest {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	@PostMapping("facebook-verify-email")
 	@Cacheable(value = "auctioneer-auctions")
 	public ResponseEntity<String> facebookVerifyEmail(@RequestBody String idToken) throws FirebaseAuthException {

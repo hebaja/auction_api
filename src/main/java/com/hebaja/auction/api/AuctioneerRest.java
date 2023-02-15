@@ -23,6 +23,7 @@ import com.hebaja.auction.service.AuctioneerService;
 @RequestMapping("/api/auctioneer")
 public class AuctioneerRest {
 	
+	@SuppressWarnings("unused")
 	private static final String TAG = AuctioneerRest.class.toString();
 	
 	@Autowired

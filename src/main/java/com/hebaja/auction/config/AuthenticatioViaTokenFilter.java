@@ -1,7 +1,6 @@
 package com.hebaja.auction.config;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.FilterChain;
@@ -9,13 +8,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -30,12 +26,11 @@ public class AuthenticatioViaTokenFilter extends OncePerRequestFilter {
 
 	private AuctioneerRepository auctioneerRepository;
 	
-   private ObjectMapper mapper;
-
 	public AuthenticatioViaTokenFilter(AuctioneerRepository auctioneerRepository) {
 		this.auctioneerRepository = auctioneerRepository;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {

@@ -7,11 +7,11 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hebaja.auction.model.Auctioneer;
-import com.hebaja.auction.model.Bid;
 import com.hebaja.auction.model.Lot;
 
 public class LotDto {
 	
+	@SuppressWarnings("unused")
 	private final String TAG = "[LotDto] ";
 
 	private Long id;

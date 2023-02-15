@@ -2,8 +2,6 @@ package com.hebaja.auction.form;
 
 import com.hebaja.auction.model.Auctioneer;
 
-import at.favre.lib.crypto.bcrypt.BCrypt;
-
 public class AuctioneerForm {
 
 	private Long id;

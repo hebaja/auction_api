@@ -1,15 +1,12 @@
 package com.hebaja.auction.repository;
 
 
-import com.hebaja.auction.model.Auction;
-import com.hebaja.auction.model.Auctioneer;
-import com.hebaja.auction.model.Lot;
-
-import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import com.hebaja.auction.model.Auction;
+import com.hebaja.auction.model.Lot;
 
 public interface LotRepository extends JpaRepository<Lot, Long> {
 

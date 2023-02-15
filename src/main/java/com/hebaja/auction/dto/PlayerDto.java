@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hebaja.auction.model.Lot;
 import com.hebaja.auction.model.Player;
 
-import java.lang.reflect.ParameterizedType;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 

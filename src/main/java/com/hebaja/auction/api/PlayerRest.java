@@ -38,6 +38,7 @@ import com.hebaja.auction.task.Worker;
 @RequestMapping("/api/player")
 public class PlayerRest {
 	
+	@SuppressWarnings("unused")
 	private static final String TAG = PlayerRest.class.toString();
 
 	@Autowired

@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hebaja.auction.model.Auction;
 import com.hebaja.auction.model.Auctioneer;
-import com.hebaja.auction.model.GroupPlayer;
 import com.hebaja.auction.model.Player;
 
 public class AuctionDto {

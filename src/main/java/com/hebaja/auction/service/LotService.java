@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.hebaja.auction.model.Auction;
-import com.hebaja.auction.model.Auctioneer;
 import com.hebaja.auction.model.Lot;
 import com.hebaja.auction.repository.LotRepository;
 

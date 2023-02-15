@@ -1,7 +1,5 @@
 package com.hebaja.auction.task;
 
-import java.math.BigDecimal;
-
 import com.hebaja.auction.enums.BidAnalysisResult;
 import com.hebaja.auction.model.Auctioneer;
 import com.hebaja.auction.model.Bid;

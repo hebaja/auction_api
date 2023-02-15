@@ -11,6 +11,7 @@ import com.hebaja.auction.model.Auctioneer;
 import com.hebaja.auction.model.GroupPlayer;
 import com.hebaja.auction.model.Player;
 
+@SuppressWarnings("unused")
 public class AuctioneerAuctionsDto {
 	
 	private final String TAG = "[AuctioneerAuctionsDto] "; 
@@ -27,8 +28,8 @@ public class AuctioneerAuctionsDto {
 		this.setName(auctioneer.getName());
 		this.pitureUrl = auctioneer.getPictureUrl();
 		if(auctioneer.getAuctions() != null) {
-			ArrayList<AuctionDto> auctionDtoList = new ArrayList<AuctionDto>();
-			ArrayList<AuctionDto> favoriteAuctionDtoList = new ArrayList<AuctionDto>();
+			ArrayList<AuctionDto> auctionDtoList = new ArrayList<>();
+			ArrayList<AuctionDto> favoriteAuctionDtoList = new ArrayList<>();
 			
 			auctioneer.getAuctions().forEach(auction -> {
 				if(!auction.isFavorite()) {
@@ -58,11 +59,9 @@ public class AuctioneerAuctionsDto {
 		List<GroupPlayer> groupsWithBidsInAuciton = new ArrayList<GroupPlayer>();
 		List<Player> players = new ArrayList<Player>();
 		
-		auction.getLots().forEach(lot -> {
-			lot.getBids().forEach(bid -> {
-				groupsWithBidsInAuciton.add(bid.getPlayer().getGroupPlayers());
-			});
-		});
+		auction.getLots().forEach(lot -> 
+				lot.getBids().forEach(bid -> 
+					groupsWithBidsInAuciton.add(bid.getPlayer().getGroupPlayers())));
 		
 		List<GroupPlayer> groupsWithBidsInAucitonFiltered = groupsWithBidsInAuciton.stream().distinct().collect(Collectors.toList());
 		

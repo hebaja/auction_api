@@ -14,13 +14,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hebaja.auction.dto.AuctioneerAuctionsDto;
-import com.hebaja.auction.dto.GroupPlayerDto;
 import com.hebaja.auction.form.ActivateGroupPlayerForm;
 import com.hebaja.auction.form.DeleteGroupPlayerForm;
 import com.hebaja.auction.form.RegisterGroupPlayerForm;
 import com.hebaja.auction.form.UpdateGroupPlayerForm;
 import com.hebaja.auction.form.UpdatePlayerForm;
-import com.hebaja.auction.model.Auction;
 import com.hebaja.auction.model.Auctioneer;
 import com.hebaja.auction.model.GroupPlayer;
 import com.hebaja.auction.model.Player;
@@ -33,6 +31,7 @@ import com.hebaja.auction.service.PlayerService;
 @RequestMapping("/api/group-player")
 public class GroupPlayersRest {
 	
+	@SuppressWarnings("unused")
 	private final static String TAG = GroupPlayersRest.class.toString();
 
 	@Autowired

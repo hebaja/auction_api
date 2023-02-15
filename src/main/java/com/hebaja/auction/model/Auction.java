@@ -1,7 +1,6 @@
 package com.hebaja.auction.model;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 import javax.persistence.CascadeType;

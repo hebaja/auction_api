@@ -2,7 +2,6 @@ package com.hebaja.auction.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -158,8 +157,8 @@ class AuctioneerTest {
     	this.auctioneer.finishLot(lot);
 
         assertFalse(lot.isActive());
-        assertEquals(player2.getAcquiredLots().get(0).getTitle(), "My Lot");
-        assertEquals(player2.getAcquiredLots().get(0).getDescription(), "My lot description");
+        assertEquals("My Lot", player2.getAcquiredLots().get(0).getTitle());
+        assertEquals("My lot description", player2.getAcquiredLots().get(0).getDescription());
         assertEquals(player2.getAcquiredLots().get(0).getPricePaid(), new BigDecimal("400.0"));
         assertEquals(player2.getWallet().getMoney(), new BigDecimal("200.0"));
 
